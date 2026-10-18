@@ -12,11 +12,3 @@
     { "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 30, "period": 60 } }
   ]
 }
-{
-  "observability": {
-    "logs": {
-      "enabled": false,
-      "invocation_logs": true
-    }
-  }
-}
