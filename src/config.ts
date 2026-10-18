@@ -4,7 +4,7 @@
 // ============================================================
 
 // URL final de la web. Mientras no tengas dominio, usa la que te dé Cloudflare (xxxx.workers.dev).
-export const SITE_URL = 'https://nextgranmaestro.pages.dev'; // [CAMBIAR por tu dirección real de Cloudflare o tu dominio]
+export const SITE_URL = 'https://nextgranmaestro.forniteswap.workers.dev'; // [CAMBIAR por tu dominio real cuando lo compres]
 
 export const SITE_NAME = 'NextGranMaestro';
 export const SITE_TAGLINE = 'Analiza cualquier posición de ajedrez y descubre la mejor jugada';
