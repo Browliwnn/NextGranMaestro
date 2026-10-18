@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import { PORTAL_URL } from '../config';
+---
+<Base title="Mi plan" description="Gestiona tu plan ilimitado de NextGranMaestro y actívalo en otros dispositivos." noindex={true} crumbs={[{ name: 'Mi plan', href: '/cuenta' }]}>
+  <div class="page-head narrow"><h1>Mi plan</h1></div>
+  <div class="narrow" style="padding-bottom:3rem">
+    <section id="on" hidden class="card">
+      <h2 class="h2s">✓ Plan ilimitado activo en este navegador</h2>
+      <p class="muted">Para usarlo en otro móvil u ordenador, copia este código y pégalo en esta misma página desde ese dispositivo.</p>
+      <label for="code" class="lbl">Tu código de activación</label>
+      <textarea id="code" readonly rows="4" spellcheck="false"></textarea>
+      <div class="row">
+        <button class="btn btn-primary btn-sm" id="copy" type="button">Copiar código</button>
+        <button class="btn btn-sm" id="out" type="button">Quitar el plan de este navegador</button>
+      </div>
+      <p class="muted small" id="msg-on" role="status"></p>
+      <p class="notice"><strong>No lo compartas.</strong> Quien tenga el código puede usar tu plan mientras tu suscripción siga activa.</p>
+      {PORTAL_URL ? <p><a class="btn btn-sm" href={PORTAL_URL} rel="noopener">Gestionar o cancelar mi suscripción</a></p> : <p class="muted small">Para cancelar, usa el enlace de gestión que Stripe te envía en el recibo de pago.</p>}
+    </section>
+
+    <section id="off" hidden class="card">
+      <h2 class="h2s">Activar mi plan con un código</h2>
+      <p class="muted">¿Ya pagaste en otro dispositivo? Pega aquí tu código de activación (lo ves en esta misma página desde el dispositivo donde pagaste).</p>
+      <label for="in" class="lbl">Código de activación</label>
+      <textarea id="in" rows="4" spellcheck="false" autocomplete="off" placeholder="Pega el código aquí"></textarea>
+      <div class="row"><button class="btn btn-primary btn-sm" id="go" type="button">Activar</button><a class="btn btn-sm" href="/precios">Ver planes</a></div>
+      <p class="err" id="msg-off" role="alert" hidden></p>
+    </section>
+  </div>
+</Base>
+<style>
+  .h2s{font-size:1.35rem}
+  .lbl{display:block;font-weight:600;font-size:.9rem;margin:1rem 0 .4rem}
+  textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem;font:.78rem/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical;word-break:break-all}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
+  .small{font-size:.85rem}
+  .err{color:#ffb3b3;margin-top:.8rem}
+</style>
+<script>
+  import { getToken, clearToken, activateWithCode, refreshPremium } from '../utils/premium';
+  const $ = (id: string) => document.getElementById(id)!;
+  async function paint() {
+    const active = getToken() ? await refreshPremium() : false;
+    $('on').hidden = !active; $('off').hidden = active;
+    if (active) ($('code') as HTMLTextAreaElement).value = getToken() || '';
+  }
+  $('copy').addEventListener('click', async () => {
+    const el = $('code') as HTMLTextAreaElement;
+    try { await navigator.clipboard.writeText(el.value); $('msg-on').textContent = 'Código copiado.'; } catch { el.select(); $('msg-on').textContent = 'Selecciona el texto y cópialo manualmente.'; }
+  });
+  $('out').addEventListener('click', () => { if (confirm('¿Quitar el plan ilimitado de este navegador? Podrás volver a activarlo con tu código.')) { clearToken(); paint(); } });
+  $('go').addEventListener('click', async () => {
+    const msg = $('msg-off'); msg.hidden = true;
+    const r = await activateWithCode(($('in') as HTMLTextAreaElement).value);
+    if (r === 'ok') { paint(); return; }
+    msg.textContent = r === 'invalid' ? 'El código no es válido. Cópialo completo, sin espacios de más.' : r === 'inactive' ? 'Esa suscripción ya no está activa.' : 'No se pudo comprobar ahora mismo. Inténtalo de nuevo en unos segundos.';
+    msg.hidden = false;
+  });
+  paint();
+</script>

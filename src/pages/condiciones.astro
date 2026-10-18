@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import { LEGAL, PLANS, SITE_NAME } from '../config';
+---
+<Base title="Condiciones de contratación" description="Condiciones del plan ilimitado de NextGranMaestro: precio, renovación, cancelación y desistimiento." crumbs={[{ name: 'Condiciones de contratación', href: '/condiciones' }]}>
+  <div class="page-head narrow"><h1>Condiciones de contratación</h1></div>
+  <div class="narrow prose" style="padding-bottom:3rem">
+    <p class="notice"><strong>Borrador.</strong> Texto orientativo, no es asesoramiento legal. Complétalo y hazlo revisar por una gestoría o un abogado antes de empezar a cobrar.</p>
+    <h2>1. Quién vende</h2>
+    <p><span class="placeholder">{LEGAL.owner}</span> · NIF/CIF <span class="placeholder">{LEGAL.taxId}</span> · <span class="placeholder">{LEGAL.address}</span> · <span class="placeholder">{LEGAL.email}</span></p>
+    <h2>2. Qué se contrata</h2>
+    <p>Una suscripción al plan ilimitado de {SITE_NAME}: análisis de posiciones sin límite diario y acceso a la profundidad de análisis «Máxima». Es un servicio digital que se activa en el navegador en el que se realiza el pago.</p>
+    <h2>3. Precio y renovación</h2>
+    <ul>
+      <li>Plan mensual: {PLANS.monthly.price}{PLANS.monthly.period}. Plan anual: {PLANS.yearly.price}{PLANS.yearly.period}.</li>
+      <li>La suscripción se renueva automáticamente al final de cada periodo hasta que se cancele.</li>
+      <li>Precios con impuestos incluidos según la normativa aplicable. <span class="placeholder">[CONFIRMAR con tu gestor el tratamiento del IVA]</span></li>
+    </ul>
+    <h2>4. Pago</h2>
+    <p>Los pagos los procesa Stripe. {SITE_NAME} no recibe ni almacena los datos de tu tarjeta.</p>
+    <h2>5. Cancelación</h2>
+    <p>Puedes cancelar cuando quieras desde el portal de cliente de Stripe. La cancelación evita futuras renovaciones; el plan sigue activo hasta el final del periodo ya pagado. <span class="placeholder">[CONFIRMAR política de reembolsos]</span></p>
+    <h2>6. Derecho de desistimiento</h2>
+    <p><span class="placeholder">[REDACTAR CON TU GESTOR: la normativa de consumidores permite desistir en los 14 días siguientes a la contratación, con particularidades para el contenido y los servicios digitales cuya ejecución empieza de inmediato con el consentimiento expreso del consumidor.]</span></p>
+    <h2>7. Uso adecuado</h2>
+    <p>El servicio es una herramienta de análisis y estudio. No debe utilizarse para obtener ventaja en partidas contra otras personas ni en competiciones. Podemos suspender el acceso si se detecta un uso abusivo o fraudulento del servicio.</p>
+    <h2>8. Garantías y responsabilidad</h2>
+    <p>El análisis lo calcula un motor de ajedrez y se ofrece «tal cual»; no garantizamos resultados en partidas. <span class="placeholder">[REVISAR con tu gestor el alcance de la responsabilidad]</span></p>
+  </div>
+</Base>

@@ -1,0 +1,44 @@
+---
+// Tablero de ejemplo del inicio: posición tras 1.d4 (mueven las negras) con la mejor jugada calculada
+// con Stockfish (profundidad 16): Cf6, evaluación +0,23 para las blancas.
+import { Chess } from 'chess.js';
+import { pieceSvg } from '../utils/pieces';
+import { arrowSvg } from '../utils/arrows';
+import { defsSvg } from '../utils/pieces';
+const g = new Chess('rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1');
+const files = 'abcdefgh';
+const cells: { x: number; y: number; dark: boolean; svg: string }[] = [];
+for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+  const p = g.get((files[f] + (8 - r)) as any);
+  cells.push({ x: f * 100, y: r * 100, dark: (f + (7 - r)) % 2 === 0, svg: p ? pieceSvg(p.color, p.type).replace('<svg ', `<svg x="${f * 100 + 4}" y="${r * 100 + 4}" width="92" height="92" `) : '' });
+}
+const arrows = arrowSvg('g8', 'f6', '#3ddc97', 18, 0.95);
+---
+<Fragment set:html={defsSvg} />
+<figure class="hb">
+  <div class="hb-frame">
+    <svg viewBox="0 0 800 800" role="img" aria-label="Tablero de ejemplo: una flecha verde muestra la mejor respuesta de las negras a 1.d4, el caballo a f6">
+      {cells.map((c) => <rect x={c.x} y={c.y} width="100" height="100" fill={c.dark ? '#a9744f' : '#f0dcb5'} />)}
+      {cells.map((c) => <Fragment set:html={c.svg} />)}
+      <Fragment set:html={arrows} />
+    </svg>
+  </div>
+  <figcaption class="hb-cap">
+    <span class="hb-best"><i></i>Mejor jugada: <b>Cf6</b></span>
+    <span>Evaluación <b>+0,23</b></span>
+    <span>Profundidad <b>16</b></span>
+  </figcaption>
+</figure>
+<style is:global>
+  .hb .pcs{width:92px;height:92px;max-width:none;display:inline}
+  .hb{margin:0;max-width:470px;margin-inline:auto;width:100%}
+  .hb-frame{padding:12px;border-radius:18px;background:linear-gradient(145deg,#6b4a2f,#3b2716);box-shadow:0 25px 60px rgba(0,0,0,.55),0 0 80px rgba(240,185,74,.12),inset 0 1px 0 rgba(255,255,255,.15);animation:float 6s ease-in-out infinite}
+  .hb svg{display:block;width:100%;height:auto;border-radius:4px}
+  .hb-cap{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;font-size:.9rem;color:var(--muted)}
+  .hb-cap span{display:flex;align-items:center;gap:.4rem;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:.3rem .8rem}
+  .hb-cap i{width:10px;height:10px;border-radius:50%;background:#3ddc97}
+  .hb-best{border-color:rgba(61,220,151,.5)!important}
+  .hb-cap b{color:var(--text)}
+  @keyframes float{50%{transform:translateY(-6px)}}
+  @media (prefers-reduced-motion:reduce){.hb-frame{animation:none}}
+</style>
