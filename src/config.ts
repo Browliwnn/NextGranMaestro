@@ -22,7 +22,7 @@ export const PORTAL_URL: string | null = null; // [AÑADIR enlace del portal de 
 export const TESTIMONIALS: { name: string; detail?: string; text: string }[] = [];
 
 // Análisis gratuitos por día en el plan gratis.
-export const FREE_ANALYSES_PER_DAY = 5;
+export const FREE_ANALYSES_PER_DAY = 20;
 
 // Entrenamiento: niveles NUEVOS que se pueden superar cada día (los ya superados se pueden repetir siempre).
 export const TRAINING = { freePerDay: 1, premiumPerDay: 5 };
