@@ -35,9 +35,9 @@ export const CONTACT_EMAIL: string | null = 'forniteswap@gmail.com';
 
 // Datos legales del titular (obligatorios en España para el Aviso Legal si hay actividad económica)
 export const LEGAL = {
-  owner: '[AÑADIR NOMBRE O RAZÓN SOCIAL]',
-  taxId: '[AÑADIR NIF/CIF]',
-  address: '[AÑADIR DOMICILIO]',
+  owner: '[Andres Sánchez]',
+  taxId: '[X.X.X.X]',
+  address: '[España,Castilla la Mancha]',
   email: 'forniteswap@gmail.com',
   updated: '21 de octubre de 2026',
 };
