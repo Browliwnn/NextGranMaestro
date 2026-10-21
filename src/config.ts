@@ -25,7 +25,7 @@ export const TESTIMONIALS: { name: string; detail?: string; text: string }[] = [
 export const FREE_ANALYSES_PER_DAY = 20;
 
 // Entrenamiento: niveles NUEVOS que se pueden superar cada día (los ya superados se pueden repetir siempre).
-export const TRAINING = { freePerDay: 1, premiumPerDay: 5 };
+export const TRAINING = { freePerDay: 2, premiumPerDay: 10 };
 
 // Atención al cliente: canal de soporte en Discord (invitación https://discord.gg/<código>)
 export const SUPPORT_URL = 'https://discord.gg/cAFnyKjzgk';
