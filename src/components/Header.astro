@@ -1,0 +1,39 @@
+---
+import { NAV, SITE_NAME } from '../config';
+import Logo from './Logo.astro';
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '').replace(/\/$/, '') || '/';
+---
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label={`${SITE_NAME} — inicio`}><Logo /><span>Next<b>Gran</b>Maestro</span></a>
+    <button class="menu-btn" aria-expanded="false" aria-controls="nav" aria-label="Abrir menú">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav id="nav" class="nav" aria-label="Principal">
+      {NAV.map((n) => <a href={n.href} aria-current={path === n.href ? 'page' : undefined}>{n.label}</a>)}
+      <a class="nav-search" href="/buscar" aria-label="Buscar en la web" title="Buscar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a>
+      <a class="btn btn-primary btn-sm" href="/precios" data-free-only>Plan ilimitado</a>
+      <a class="plan-chip" href="/cuenta" id="plan-chip" data-prem-only title="Tu plan"><span aria-hidden="true">♛</span> <span id="plan-chip-t">Plan ilimitado</span></a>
+    </nav>
+  </div>
+</header>
+<script>
+  import { isPremium, refreshPremium, getPlan, planLabel } from '../utils/premium';
+  const paintPlan = () => {
+    const on = isPremium();
+    if (on) { document.documentElement.setAttribute('data-prem', getPlan()); const t = document.getElementById('plan-chip-t'); if (t) t.textContent = planLabel(getPlan()); }
+    else document.documentElement.removeAttribute('data-prem');
+  };
+  paintPlan();
+  refreshPremium().then(paintPlan);
+  const b = document.querySelector('.menu-btn');
+  const n = document.getElementById('nav');
+  b?.addEventListener('click', () => {
+    const o = n!.classList.toggle('open');
+    b.setAttribute('aria-expanded', String(o));
+    b.setAttribute('aria-label', o ? 'Cerrar menú' : 'Abrir menú');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && n!.classList.contains('open')) { n!.classList.remove('open'); b?.setAttribute('aria-expanded', 'false'); (b as HTMLElement).focus(); }
+  });
+</script>

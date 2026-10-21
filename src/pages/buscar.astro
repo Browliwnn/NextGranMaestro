@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Buscar" description="Busca en NextGranMaestro: análisis, entrenamiento, precios, preguntas frecuentes y más." noindex={true} crumbs={[{ name: 'Buscar', href: '/buscar' }]}>
+  <div class="page-head narrow">
+    <h1>Buscar</h1>
+    <p class="muted">Busca en todas las páginas de NextGranMaestro.</p>
+  </div>
+  <div class="narrow" style="padding-bottom:3rem">
+    <form role="search" id="sf" class="sform" action="/buscar" method="get">
+      <label for="q" class="sr">Qué quieres buscar</label>
+      <input id="q" name="q" type="search" placeholder="Ej.: precios, cancelar, entrenamiento, profundidad…" autocomplete="off" enterkeyhint="search" />
+      <button class="btn btn-primary" type="submit">Buscar</button>
+    </form>
+    <p id="count" class="muted small" role="status" aria-live="polite"></p>
+    <ol id="res" class="res"></ol>
+    <noscript><p class="notice">El buscador necesita JavaScript. Mientras tanto, usa el menú o las <a href="/faq">preguntas frecuentes</a>.</p></noscript>
+  </div>
+</Base>
+<style>
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .sform{display:flex;gap:.6rem}
+  .sform input{flex:1;min-width:0;min-height:48px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:.6rem .9rem;font:inherit;font-size:1rem}
+  .sform input:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .small{font-size:.9rem}
+  .res{list-style:none;margin:1rem 0 0;padding:0;display:grid;gap:.8rem}
+  .res li{padding:1rem 1.1rem;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  .res a.t{font:700 1.1rem var(--font);text-decoration:none}
+  .res a.t:hover{text-decoration:underline}
+  .res .u{color:var(--muted);font-size:.8rem;margin:.1rem 0 .4rem}
+  .res p{margin:.2rem 0 0;color:var(--muted);font-size:.95rem}
+  .res mark{background:rgba(214,176,92,.3);color:var(--text);border-radius:3px;padding:0 .1em}
+</style>
+<script>
+  type Doc = { u: string; t: string; d: string; h: string; x: string };
+  const $ = (id: string) => document.getElementById(id)!;
+  const input = $('q') as HTMLInputElement; const res = $('res'); const count = $('count');
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  let docs: Doc[] | null = null; let loading: Promise<void> | null = null;
+  const load = () => loading ||= fetch('/search-index.json').then((r) => r.json()).then((d) => { docs = d; }).catch(() => { count.textContent = 'No se pudo cargar el buscador. Recarga la página.'; loading = null; });
+
+  // Resalta (sin tocar el texto original) cada palabra buscada, ignorando tildes y mayúsculas
+  function highlight(text: string, words: string[]) {
+    const n = norm(text); const spans: [number, number][] = [];
+    for (const w of words) { let i = 0; while ((i = n.indexOf(w, i)) !== -1) { spans.push([i, i + w.length]); i += w.length; } }
+    spans.sort((a, b) => a[0] - b[0]);
+    let out = ''; let pos = 0;
+    for (const [a, b] of spans) { if (a < pos) continue; out += esc(text.slice(pos, a)) + '<mark>' + esc(text.slice(a, b)) + '</mark>'; pos = b; }
+    return out + esc(text.slice(pos));
+  }
+  function snippet(d: Doc, words: string[]) {
+    const body = d.x; const n = norm(body); let at = -1;
+    for (const w of words) { const i = n.indexOf(w); if (i !== -1 && (at === -1 || i < at)) at = i; }
+    if (at === -1) return d.d;
+    const a = Math.max(0, at - 60); const b = Math.min(body.length, at + 160);
+    return (a > 0 ? '…' : '') + body.slice(a, b).trim() + (b < body.length ? '…' : '');
+  }
+  function search(q: string) {
+    const words = norm(q).split(/[^a-z0-9ñ]+/).filter((w) => w.length > 1);
+    if (!words.length) { res.innerHTML = ''; count.textContent = q.trim() ? 'Escribe al menos dos letras.' : ''; return; }
+    const scored = (docs || []).map((d) => {
+      const t = norm(d.t), de = norm(d.d), h = norm(d.h), x = norm(d.x); let s = 0;
+      for (const w of words) {
+        const inT = t.includes(w), inD = de.includes(w), inH = h.includes(w), inX = x.includes(w);
+        if (!(inT || inD || inH || inX)) return { d, s: 0 }; // todas las palabras deben aparecer
+        s += (inT ? 10 : 0) + (inH ? 5 : 0) + (inD ? 3 : 0) + (inX ? 1 : 0);
+      }
+      return { d, s };
+    }).filter((r) => r.s > 0).sort((a, b) => b.s - a.s);
+    count.textContent = scored.length ? `${scored.length} ${scored.length === 1 ? 'resultado' : 'resultados'}` : `Sin resultados para «${q}». Prueba con otras palabras.`;
+    res.innerHTML = scored.map(({ d }) => `<li><a class="t" href="${esc(d.u)}">${highlight(d.t, words)}</a><div class="u">${esc(d.u)}</div><p>${highlight(snippet(d, words), words)}</p></li>`).join('');
+  }
+  const run = async () => { await load(); const q = input.value; search(q); const u = new URL(location.href); q.trim() ? u.searchParams.set('q', q) : u.searchParams.delete('q'); history.replaceState(null, '', u); };
+  input.addEventListener('input', run);
+  $('sf').addEventListener('submit', (e) => { e.preventDefault(); run(); });
+  const q0 = new URLSearchParams(location.search).get('q'); if (q0) { input.value = q0; run(); } else load();
+  input.focus();
+</script>

@@ -6,5 +6,5 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   build: { format: 'file' },
-  integrations: [sitemap({ filter: (p) => !p.includes('/404') && !p.includes('/gracias') && !p.includes('/cuenta') })],
+  integrations: [sitemap({ filter: (p) => !p.includes('/404') && !p.includes('/gracias') && !p.includes('/cuenta') && !p.includes('/traspasar') && !p.includes('/buscar') })],
 });

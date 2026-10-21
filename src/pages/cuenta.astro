@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import { PORTAL_URL, FREE_ANALYSES_PER_DAY, TRAINING, SUPPORT_URL } from '../config';
+---
+<Base title="Mi plan" description="Consulta tu plan de NextGranMaestro." noindex={true} crumbs={[{ name: 'Mi plan', href: '/cuenta' }]}>
+  <div class="page-head narrow"><h1>Mi plan</h1></div>
+  <div class="narrow" style="padding-bottom:3rem">
+    <section id="loading" class="card" aria-live="polite"><p class="muted">Comprobando tu plan…</p></section>
+
+    <section id="on" hidden class="card plan-card">
+      <p class="badge">♛ <span id="plan-name">Plan ilimitado</span></p>
+      <h2 class="h2s">Tu plan está activo en este dispositivo</h2>
+      <ul class="ticks">
+        <li>Análisis ilimitados y profundidad «Máximo».</li>
+        <li>Entrenamiento: hasta <strong>{TRAINING.premiumPerDay}</strong> niveles nuevos al día.</li>
+        <li>Sin avisos de compra.</li>
+      </ul>
+      <p class="muted small">Un plan funciona en un dispositivo a la vez. ¿Cambias de móvil u ordenador? Usa <a href="/traspasar">Traspasar plan</a>.</p>
+      <div class="row">
+        <a class="btn btn-primary btn-sm" href="/analizador">Analizar</a>
+        <a class="btn btn-sm" href="/entrenamiento">Entrenar</a>
+        <a class="btn btn-sm" href="/traspasar">Traspasar plan</a>
+        {PORTAL_URL ? <a class="btn btn-sm" href={PORTAL_URL} rel="noopener">Gestionar o cancelar suscripción</a> : null}
+      </div>
+      <p class="muted small">¿Algún problema con tu plan? <a href={SUPPORT_URL} rel="noopener noreferrer" target="_blank">Escríbenos en el soporte de Discord</a>.</p>
+      {!PORTAL_URL && <p class="muted small">Para cancelar, usa el enlace de gestión que Stripe te envía en el recibo de pago.</p>}
+    </section>
+
+    <section id="off" hidden class="card">
+      <p id="moved" class="notice" hidden><strong>Tu plan se ha activado en otro dispositivo.</strong> Un plan solo funciona en un dispositivo a la vez. Si quieres volver a usarlo aquí, entra en Traspasar plan con tu código.</p>
+      <h2 class="h2s">Plan gratuito</h2>
+      <ul class="ticks">
+        <li>{FREE_ANALYSES_PER_DAY} análisis al día.</li>
+        <li>Entrenamiento: {TRAINING.freePerDay} nivel nuevo al día.</li>
+      </ul>
+      <div class="row">
+        <a class="btn btn-primary btn-sm" href="/precios">Ver el plan ilimitado</a>
+        <a class="btn btn-sm" href="/traspasar">Ya tengo plan: traspasarlo aquí</a>
+      </div>
+    </section>
+  </div>
+</Base>
+<style>
+  .h2s{font-size:1.35rem;margin-top:.4rem}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+  .small{font-size:.85rem}
+  .badge{display:inline-block;margin:0;padding:.25rem .7rem;border-radius:999px;background:rgba(214,176,92,.14);color:#e9cd8a;font-weight:700;font-size:.85rem}
+  .ticks{margin:.8rem 0;padding-left:1.2rem}.ticks li{margin:.3rem 0}
+</style>
+<script>
+  import { getToken, refreshPremium, getPlan, planLabel, consumeMoved } from '../utils/premium';
+  const $ = (id: string) => document.getElementById(id)!;
+  (async () => {
+    const had = !!getToken();
+    const active = had ? await refreshPremium(true) : false;
+    $('loading').hidden = true;
+    $('on').hidden = !active; $('off').hidden = active;
+    if (active) $('plan-name').textContent = planLabel(getPlan());
+    else $('moved').hidden = !consumeMoved();
+  })();
+</script>

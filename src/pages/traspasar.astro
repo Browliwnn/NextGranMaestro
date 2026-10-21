@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Traspasar plan" description="Pasa tu plan ilimitado de NextGranMaestro a otro móvil u ordenador." noindex={true} crumbs={[{ name: 'Traspasar plan', href: '/traspasar' }]}>
+  <div class="page-head narrow">
+    <h1>Traspasar plan</h1>
+    <p class="muted">Tu plan funciona en <strong>un dispositivo a la vez</strong>. Aquí lo pasas de uno a otro en dos pasos.</p>
+  </div>
+  <div class="narrow stack" style="padding-bottom:3rem">
+    <section id="send" hidden class="card">
+      <h2 class="h2s">1 · Sacar mi código (dispositivo donde tienes el plan)</h2>
+      <p class="muted">Pulsa el botón, copia el código y pégalo en el otro dispositivo, en esta misma página, en el apartado 2.</p>
+      <button class="btn btn-primary btn-sm" id="show" type="button">Mostrar mi código</button>
+      <div id="codebox" hidden>
+        <label for="code" class="lbl">Tu código</label>
+        <textarea id="code" readonly rows="4" spellcheck="false"></textarea>
+        <div class="row"><button class="btn btn-sm" id="copy" type="button">Copiar código</button><button class="btn btn-sm" id="hide" type="button">Ocultar</button></div>
+        <p class="muted small" id="msg-on" role="status"></p>
+      </div>
+      <p class="notice"><strong>No lo compartas ni lo publiques.</strong> Quien tenga el código puede pasar tu plan a su dispositivo y dejarte sin él. Al usarlo en otro dispositivo, este dejará de tener el plan en cuanto se conecte.</p>
+    </section>
+
+    <section id="recv" class="card">
+      <h2 class="h2s"><span id="n2">2</span> · Recibir el plan en este dispositivo</h2>
+      <p class="muted">Pega aquí el código que sacaste del otro dispositivo.</p>
+      <label for="in" class="lbl">Código</label>
+      <textarea id="in" rows="4" spellcheck="false" autocomplete="off" placeholder="Pega el código aquí"></textarea>
+      <div class="row"><button class="btn btn-primary btn-sm" id="go" type="button">Activar aquí</button><a class="btn btn-sm" href="/precios">Ver planes</a></div>
+      <p class="err" id="msg-off" role="alert" hidden></p>
+      <p class="ok" id="msg-ok" role="status" hidden>✓ Plan activado en este dispositivo. <a href="/cuenta">Ver mi plan</a></p>
+      <p class="muted small">Para evitar abusos, después de un traspaso hay que esperar 24 horas para volver a pasarlo. Si no tienes el código porque perdiste el dispositivo, <a href="/soporte">escríbenos</a>.</p>
+    </section>
+  </div>
+</Base>
+<style>
+  .h2s{font-size:1.3rem}
+  .stack{display:grid;gap:1.2rem}
+  .lbl{display:block;font-weight:600;font-size:.9rem;margin:1rem 0 .4rem}
+  textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem;font:.78rem/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical;word-break:break-all}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem}
+  .small{font-size:.85rem}
+  .err{color:#ffb3b3;margin-top:.8rem}.ok{color:#9be6a8;margin-top:.8rem}
+</style>
+<script>
+  import { getToken, refreshPremium, transferWithCode } from '../utils/premium';
+  const $ = (id: string) => document.getElementById(id)!;
+  (async () => {
+    const active = getToken() ? await refreshPremium() : false;
+    $('send').hidden = !active;
+    if (!active) $('n2').textContent = '1';
+  })();
+  $('show').addEventListener('click', () => { ($('code') as HTMLTextAreaElement).value = getToken() || ''; $('codebox').hidden = false; $('show').hidden = true; });
+  $('hide').addEventListener('click', () => { ($('code') as HTMLTextAreaElement).value = ''; $('codebox').hidden = true; $('show').hidden = false; });
+  $('copy').addEventListener('click', async () => {
+    const el = $('code') as HTMLTextAreaElement;
+    try { await navigator.clipboard.writeText(el.value); $('msg-on').textContent = 'Código copiado.'; } catch { el.select(); $('msg-on').textContent = 'Selecciona el texto y cópialo manualmente.'; }
+  });
+  $('go').addEventListener('click', async () => {
+    const err = $('msg-off'); err.hidden = true; $('msg-ok').hidden = true;
+    const { result, waitHours } = await transferWithCode(($('in') as HTMLTextAreaElement).value);
+    if (result === 'ok') { $('msg-ok').hidden = false; ($('in') as HTMLTextAreaElement).value = ''; $('send').hidden = false; return; }
+    err.textContent = result === 'invalid' ? 'El código no es válido. Cópialo completo, sin espacios de más.'
+      : result === 'inactive' ? 'Esa suscripción ya no está activa.'
+      : result === 'wait' ? `Este plan se pasó de dispositivo hace poco. Podrás volver a pasarlo dentro de unas ${waitHours} horas.`
+      : 'No se pudo comprobar ahora mismo. Inténtalo de nuevo en unos segundos.';
+    err.hidden = false;
+  });
+</script>
