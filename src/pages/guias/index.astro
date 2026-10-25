@@ -1,0 +1,23 @@
+---
+import Base from '../../layouts/Base.astro';
+import { GUIDES } from '../../data/guides';
+---
+<Base title="Guías de ajedrez para mejorar" description="Guías prácticas de ajedrez: cómo analizar tus partidas, principios de apertura, tácticas básicas, errores comunes y cómo leer un motor." crumbs={[{ name: 'Guías', href: '/guias' }]}>
+  <div class="page-head wrap">
+    <span class="eyebrow">Guías</span>
+    <h1>Guías para mejorar al ajedrez</h1>
+    <p class="muted" style="max-width:68ch">Explicaciones cortas y prácticas, sin teoría de más. Cada guía termina con una forma de ponerla en práctica en la web.</p>
+  </div>
+  <div class="wrap" style="padding-bottom:3rem">
+    <div class="gd-grid">
+      {GUIDES.map((g) => <a class="card gd" href={`/guias/${g.slug}`}><h2>{g.title}</h2><p class="muted">{g.description}</p><span class="more">Leer la guía →</span></a>)}
+    </div>
+  </div>
+</Base>
+<style>
+  .gd-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .gd{display:block;color:inherit;text-decoration:none}
+  .gd:hover{border-color:var(--gold)}
+  .gd h2{font-size:1.2rem;margin:0 0 .5rem}
+  .more{color:var(--gold);font-weight:600}
+</style>

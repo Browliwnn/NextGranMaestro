@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import Bots from '../components/Bots.astro';
+import OnlinePulse from '../components/OnlinePulse.astro';
+import { BOTS } from '../data/bots';
+import { BOT_HINTS } from '../config';
+const free = BOTS.filter((b) => !b.premium).length;
+const prem = BOTS.length - free;
+---
+<Base title="Jugar contra bots de ajedrez" description={`Juega contra ${BOTS.length} bots de ajedrez de distinto nivel, desde 400 hasta 3190 de Elo aproximado, con ${BOT_HINTS} pistas por partida.`} crumbs={[{ name: 'Jugar contra bots', href: '/jugar' }]}>
+  <div class="page-head wrap">
+    <span class="eyebrow">Jugar</span>
+    <h1>Juega contra bots de todos los niveles</h1>
+    <p class="muted" style="max-width:68ch">{free} bots gratis, de 400 a 1700 de Elo aproximado<span data-free-only>, y {prem} más con el plan ilimitado, hasta el motor a plena potencia</span>. En cada partida tienes {BOT_HINTS} pistas: el motor te marca la mejor jugada con una flecha.</p>
+  </div>
+  <div class="wrap" style="padding-bottom:3rem"><p class="muted small">¿Prefieres jugar contra personas? <a href="/online">Duelos en línea</a>.</p><OnlinePulse /><Bots /></div>
+</Base>

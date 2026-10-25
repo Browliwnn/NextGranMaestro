@@ -1,0 +1,468 @@
+---
+import { FREE_ANALYSES_PER_DAY } from '../config';
+import { defsSvg } from '../utils/pieces';
+---
+<Fragment set:html={defsSvg} />
+<div class="az" data-free={FREE_ANALYSES_PER_DAY}>
+  <div class="az-board-col">
+    <div class="stage">
+      <div class="evalv" aria-hidden="true"><i id="evalV" style="height:50%"></i><span id="evalVtxt">0.0</span></div>
+      <div class="frame">
+        <div class="board-wrap">
+          <div id="board" class="board" role="group" aria-label="Tablero de ajedrez"></div>
+          <svg id="arrows" class="arrows" viewBox="0 0 800 800" aria-hidden="true"></svg>
+          <div class="thinking" id="thinking" hidden><span></span>Calculando…</div>
+          <div class="promo" id="promo" role="dialog" aria-modal="true" aria-label="Elige la pieza para coronar el peón" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div class="az-tools" role="group" aria-label="Controles del tablero">
+      <button class="btn btn-sm" id="undo" type="button">↶ Deshacer</button>
+      <button class="btn btn-sm" id="flip" type="button">⇅ Girar</button>
+      <button class="btn btn-sm" id="reset" type="button">Posición inicial</button>
+      <button class="btn btn-sm" id="sound" type="button" aria-pressed="true">🔊 Sonido</button>
+    </div>
+    <div class="az-tools" id="pgnNav" role="group" aria-label="Recorrer la partida cargada" hidden>
+      <button class="btn btn-sm" id="n-first" type="button" aria-label="Ir al principio">⏮</button>
+      <button class="btn btn-sm" id="n-prev" type="button" aria-label="Jugada anterior">◀</button>
+      <span class="muted small" id="n-info" aria-live="polite" style="align-self:center;margin:0 .4rem"></span>
+      <button class="btn btn-sm" id="n-next" type="button" aria-label="Jugada siguiente">▶</button>
+      <button class="btn btn-sm" id="n-last" type="button" aria-label="Ir al final">⏭</button>
+    </div>
+  </div>
+
+  <div class="az-panel">
+    <div class="card">
+      <h2 class="h-sm">Mejor jugada</h2>
+      <p class="turn" id="turn" aria-live="polite"></p>
+      <div class="result" id="result" aria-live="polite">
+        <span class="big" id="bestMove">—</span>
+        <span class="muted" id="evalTxt">Pulsa «Analizar» para calcular.</span>
+      </div>
+      <p class="muted small" id="pv"></p>
+      <p class="moves" id="moves" aria-label="Jugadas de la partida"></p>
+
+      <label for="depth" class="lbl">Profundidad de análisis</label>
+      <select id="depth">
+        <option value="10">Rápido</option>
+        <option value="14" selected>Normal</option>
+        <option value="18">Profundo (más lento)</option>
+        <option value="22" data-premium>Máximo · plan ilimitado</option>
+      </select>
+
+      <button class="btn btn-primary" id="analyze" type="button" style="width:100%;margin-top:1rem">Analizar posición</button>
+      <p class="muted small" id="quota" aria-live="polite"></p>
+      <p class="err" id="err" role="alert" hidden></p>
+    </div>
+
+    <div class="card" style="margin-top:1rem">
+      <label for="fen" class="lbl" style="margin-top:0">Cargar posición (FEN)</label>
+      <input id="fen" type="text" spellcheck="false" autocomplete="off" />
+      <div class="az-tools" style="margin-top:.7rem;justify-content:flex-start">
+        <button class="btn btn-sm" id="loadFen" type="button">Cargar</button>
+        <button class="btn btn-sm" id="copyFen" type="button">Copiar FEN</button>
+      </div>
+      <p class="muted small" id="fenMsg" role="status"></p>
+    </div>
+
+    <div class="card" style="margin-top:1rem">
+      <label for="pgn" class="lbl" style="margin-top:0">Cargar una partida (PGN)</label>
+      <textarea id="pgn" rows="4" spellcheck="false" autocomplete="off" placeholder="Pega aquí el PGN de tu partida (Lichess, Chess.com…) y recórrela jugada a jugada."></textarea>
+      <div class="az-tools" style="margin-top:.7rem;justify-content:flex-start">
+        <button class="btn btn-sm" id="loadPgn" type="button">Cargar partida</button>
+        <button class="btn btn-sm" id="copyPgn" type="button">Copiar PGN</button>
+      </div>
+      <p class="muted small" id="pgnMsg" role="status"></p>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .az{display:grid;gap:1.5rem;align-items:start}
+  @media (min-width:960px){.az{grid-template-columns:minmax(0,1fr) 390px}}
+  .stage{display:flex;gap:.6rem;width:min(100%,690px);margin-inline:auto;align-items:stretch}
+  .evalv{position:relative;width:16px;flex:none;border-radius:99px;overflow:hidden;background:#0d1117;border:1px solid var(--line);display:flex;flex-direction:column;justify-content:flex-end}
+  .evalv i{display:block;width:100%;background:linear-gradient(180deg,#fff,#d9dde4);transition:height .6s var(--ease)}
+  .evalv span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);font:700 .62rem var(--font);color:#889;white-space:nowrap;mix-blend-mode:difference}
+  .frame{flex:1;min-width:0;padding:clamp(6px,1.6vw,14px);border-radius:16px;background:linear-gradient(145deg,#6b4a2f,#3b2716);box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.15),0 0 0 1px #1d120a}
+  .board-wrap{position:relative}
+  .board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));aspect-ratio:1;border-radius:4px;overflow:hidden;user-select:none;touch-action:manipulation;box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+  .sq{position:relative;min-width:0;min-height:0;overflow:hidden;display:grid;place-items:center;border:0;padding:0;margin:0;cursor:pointer;background:#f0dcb5;color:inherit;transition:filter .15s}
+  .sq.dark{background:#a9744f}
+  .sq:hover{filter:brightness(1.07)}
+  .sq .pcs{position:absolute;inset:4%;width:92%;height:92%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));pointer-events:none}
+  .sq.sel{background-image:linear-gradient(rgba(255,214,90,.65),rgba(255,214,90,.65))}
+  .sq.last{background-image:linear-gradient(rgba(255,226,120,.42),rgba(255,226,120,.42))}
+  .sq.chk{background-image:radial-gradient(circle,rgba(255,60,60,.85) 0,rgba(255,60,60,.4) 55%,transparent 75%)}
+  .sq.hint{box-shadow:inset 0 0 0 4px rgba(61,220,151,.95)}
+  .sq.dot::after{content:"";position:absolute;width:28%;height:28%;border-radius:50%;background:rgba(20,30,20,.3)}
+  .sq.dot.cap::after{width:88%;height:88%;background:none;border:5px solid rgba(20,30,20,.3)}
+  .sq .co{position:absolute;font:700 clamp(.5rem,1.6vw,.72rem) var(--font);pointer-events:none;opacity:.8}
+  .sq .co.f{right:4%;bottom:2%}.sq .co.r{left:4%;top:2%}
+  .sq .co.lt{color:#a9744f}.sq .co.dk{color:#f0dcb5}
+  .sq.pop .pcs{animation:pop .24s var(--ease)}
+  @keyframes pop{from{transform:scale(.72)}}
+  .arrows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+  .arrows .arr{animation:fadeArrow .45s var(--ease) both}
+  @keyframes fadeArrow{from{opacity:0;transform:scale(.97)}}
+  .thinking{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(10,14,19,.88);border:1px solid var(--gold);color:var(--text);padding:.55rem 1rem;border-radius:99px;font-weight:600;display:flex;gap:.6rem;align-items:center;z-index:5}
+  .thinking[hidden]{display:none}
+  .thinking span{width:16px;height:16px;border:3px solid var(--gold);border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite}
+  .promo{position:absolute;inset:0;z-index:6;display:grid;place-items:center;background:rgba(10,14,19,.72);backdrop-filter:blur(2px)}
+  .promo[hidden]{display:none}
+  .promo .opts{display:flex;gap:.6rem;background:var(--surface);border:1px solid var(--gold);border-radius:14px;padding:.8rem;box-shadow:var(--shadow)}
+  .promo button{width:clamp(48px,14vw,76px);aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:#f0dcb5;cursor:pointer;padding:6px;display:grid;place-items:center}
+  .promo button:hover{background:#ffe6a8}
+  .promo .pcs{width:100%;height:100%}
+  .moves{margin:.5rem 0 0;font:500 .85rem/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--muted);max-height:5.2em;overflow:auto;word-spacing:.15em}
+  .moves:empty{display:none}
+  @media (min-width:1700px){.stage{width:min(100%,780px)}.az{grid-template-columns:minmax(0,1fr) 440px}}
+  @media (max-height:520px) and (orientation:landscape){.stage{width:min(100%,calc(100dvh - 90px))}}
+  .az-tools{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;justify-content:center}
+  .h-sm{font-size:1.2rem}
+  .turn{margin:0 0 .6rem;color:var(--muted);font-size:.95rem}
+  .result{display:flex;align-items:baseline;gap:.8rem;flex-wrap:wrap;margin-bottom:.8rem}
+  .big{font:700 2.6rem var(--font-d);color:var(--gold);min-width:2ch;text-shadow:0 0 24px rgba(240,185,74,.35)}
+  .small{font-size:.85rem;margin:.6rem 0 0}
+  .lbl{display:block;font-weight:600;font-size:.9rem;margin:1rem 0 .4rem}
+  select,input[type=text]{width:100%;min-height:46px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;font:inherit}
+  input[type=text]{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem}
+  .err{color:#ffb3b3;margin:.8rem 0 0}
+  .az textarea{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem;font:.8rem/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+  .moves mark{background:rgba(214,176,92,.35);color:#ffe6a8;border-radius:4px;padding:0 .2em}
+  button.loading{position:relative;color:transparent!important}
+  button.loading::after{content:"";position:absolute;width:20px;height:20px;border:3px solid #1a1305;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.thinking span{animation:none}}
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+  import type { Square, Move } from 'chess.js';
+  import { pieceSvg } from '../utils/pieces';
+  import { arrowSvg } from '../utils/arrows';
+  import { isPremium, refreshPremium } from '../utils/premium';
+  import { cachedUser, syncNow, queueSync } from '../utils/account';
+
+  const root = document.querySelector<HTMLElement>('.az')!;
+  const FREE = Number(root.dataset.free || 5);
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const boardEl = $('board');
+  const arrowsEl = document.getElementById('arrows') as unknown as SVGSVGElement;
+  const fenEl = $<HTMLInputElement>('fen');
+  const pieceName: Record<string, string> = { k: 'rey', q: 'dama', r: 'torre', b: 'alfil', n: 'caballo', p: 'peón' };
+  const ARROW = '#3ddc97';
+  // chess.js devuelve notación inglesa (N, B, R, Q, K); aquí se muestra en español (C, A, T, D, R)
+  const ES: Record<string, string> = { N: 'C', B: 'A', R: 'T', Q: 'D', K: 'R' };
+  const es = (san: string) => san.replace(/^[NBRQK]/, (m) => ES[m]).replace(/=([NBRQ])/, (_, p) => '=' + ES[p]);
+
+  type Cand = { from: string; to: string; san: string; txt: string };
+  let game = new Chess();
+  let startFen = game.fen();
+  let loaded: { sans: string[]; start: string } | null = null; let ply = 0;
+  let flipped = false;
+  let selected: Square | null = null;
+  let last: { from: string; to: string } | null = null;
+  let cands: Cand[] = [];
+  let soundOn = true;
+  try { soundOn = localStorage.getItem('ngm-sound') !== 'off'; } catch {}
+
+  // ---------- Sonidos (sintetizados) ----------
+  let ac: AudioContext | null = null;
+  function tone(freq: number, dur: number, type: OscillatorType = 'sine', vol = 0.12, delay = 0) {
+    if (!soundOn) return;
+    try {
+      ac ||= new (window.AudioContext || (window as any).webkitAudioContext)();
+      const t = ac.currentTime + delay;
+      const o = ac.createOscillator(); const g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur);
+    } catch {}
+  }
+  const sfx = {
+    move: () => tone(220, 0.09, 'triangle', 0.18),
+    capture: () => { tone(160, 0.14, 'sawtooth', 0.12); tone(110, 0.12, 'square', 0.06, 0.02); },
+    check: () => { tone(660, 0.1, 'square', 0.08); tone(880, 0.16, 'square', 0.08, 0.1); },
+    done: () => { tone(523, 0.12, 'sine', 0.12); tone(659, 0.12, 'sine', 0.12, 0.1); tone(784, 0.2, 'sine', 0.12, 0.2); },
+    error: () => tone(130, 0.2, 'sawtooth', 0.1),
+  };
+  function syncSoundBtn() { const b = $('sound'); b.textContent = soundOn ? '🔊 Sonido' : '🔇 Sin sonido'; b.setAttribute('aria-pressed', String(soundOn)); }
+
+  // ---------- Tablero ----------
+  const files = 'abcdefgh';
+  function squares(): Square[] {
+    const out: Square[] = [];
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const file = flipped ? 7 - f : f; const rank = flipped ? r : 7 - r;
+      out.push((files[file] + (rank + 1)) as Square);
+    }
+    return out;
+  }
+  function kingSquare(color: 'w' | 'b'): string | null {
+    for (const row of game.board()) for (const p of row) if (p && p.type === 'k' && p.color === color) return p.square;
+    return null;
+  }
+  function render(popSq?: string) {
+    const legal = new Map<string, boolean>();
+    if (selected) game.moves({ square: selected, verbose: true }).forEach((m) => legal.set(m.to, !!m.captured || m.flags.includes('e')));
+    const chkSq = game.inCheck() ? kingSquare(game.turn()) : null;
+    boardEl.innerHTML = '';
+    squares().forEach((sq, i) => {
+      const file = files.indexOf(sq[0]); const rank = Number(sq[1]) - 1;
+      const dark = (file + rank) % 2 === 0;
+      const piece = game.get(sq);
+      const b = document.createElement('button');
+      b.type = 'button'; b.dataset.sq = sq;
+      let cls = 'sq' + (dark ? ' dark' : '');
+      if (last && (last.from === sq || last.to === sq)) cls += ' last';
+      if (selected === sq) cls += ' sel';
+      if (chkSq === sq) cls += ' chk';
+      if (cands[0] && (cands[0].from === sq || cands[0].to === sq)) cls += ' hint';
+      if (legal.has(sq)) cls += ' dot' + (legal.get(sq) ? ' cap' : '');
+      if (popSq === sq) cls += ' pop';
+      b.className = cls;
+      b.setAttribute('aria-label', `${sq}${piece ? ', ' + pieceName[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro') : ', vacía'}`);
+      const tone2 = dark ? 'dk' : 'lt';
+      b.innerHTML = (piece ? pieceSvg(piece.color, piece.type) : '') +
+        ((i % 8 === 7) ? `<span class="co r ${tone2}" aria-hidden="true">${sq[1]}</span>` : '') +
+        ((i >= 56) ? `<span class="co f ${tone2}" aria-hidden="true">${sq[0]}</span>` : '');
+      boardEl.appendChild(b);
+    });
+    drawArrows();
+    fenEl.value = game.fen();
+    renderMoves();
+    $('turn').textContent = game.isGameOver()
+      ? (game.isCheckmate() ? `Jaque mate. Ganan ${game.turn() === 'w' ? 'las negras' : 'las blancas'}.` : 'Partida terminada (tablas).')
+      : `Mueven ${game.turn() === 'w' ? 'las blancas' : 'las negras'}${game.inCheck() ? ' — ¡jaque!' : ''}.`;
+  }
+
+  const escHtml = (t: string) => t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  function renderMoves() {
+    const sans = loaded ? loaded.sans : game.history();
+    const parts = startFen.split(' ');
+    let white = parts[1] === 'w'; let num = Number(parts[5]) || 1; let out = '';
+    sans.forEach((san, i) => {
+      let t = '';
+      if (white) t = `${num}. ${es(san)}`;
+      else { t = (i === 0 ? `${num}… ` : '') + es(san); num++; }
+      white = !white;
+      out += (loaded && i === ply - 1 ? `<mark>${escHtml(t)}</mark>` : escHtml(t)) + ' ';
+    });
+    $('moves').innerHTML = out.trim();
+    if (loaded) $('n-info').textContent = `Jugada ${ply} de ${loaded.sans.length}`;
+  }
+
+  // ---------- Partida cargada (PGN) ----------
+  function leavePgn() { loaded = null; ply = 0; $('pgnNav').hidden = true; }
+  function gotoPly(n: number) {
+    if (!loaded) return;
+    ply = Math.max(0, Math.min(loaded.sans.length, n));
+    game = new Chess(loaded.start); let l: { from: string; to: string } | null = null;
+    for (let i = 0; i < ply; i++) { const mv = game.move(loaded.sans[i]); l = { from: mv.from, to: mv.to }; }
+    last = l; selected = null; clearResult(); if (ply > 0) sfx.move(); render();
+  }
+  function loadPgnText(text: string, toEnd = true): boolean {
+    const t = text.trim(); if (!t || t.length > 30000) return false;
+    const g = new Chess();
+    try { g.loadPgn(t); } catch { return false; }
+    const sans = g.history(); if (!sans.length) return false;
+    const h = g.header() as Record<string, string | null>;
+    const start = h.FEN && h.SetUp === '1' ? h.FEN : new Chess().fen();
+    loaded = { sans, start }; startFen = start; $('pgnNav').hidden = false;
+    gotoPly(toEnd ? sans.length : 0); return true;
+  }
+
+  // ---------- Flechas ----------
+  function drawArrows() {
+    const c = cands[0];
+    arrowsEl.innerHTML = c ? arrowSvg(c.from, c.to, ARROW, 18, 0.95, flipped) : '';
+  }
+
+  const promoEl = $('promo');
+  function closePromo() { promoEl.hidden = true; promoEl.innerHTML = ''; }
+  function askPromotion(from: Square, to: Square, color: 'w' | 'b') {
+    const names: Record<string, string> = { q: 'Dama', r: 'Torre', b: 'Alfil', n: 'Caballo' };
+    promoEl.innerHTML = '<div class="opts">' + (['q', 'r', 'b', 'n'] as const).map((t) =>
+      `<button type="button" data-p="${t}" aria-label="${names[t]}">${pieceSvg(color, t)}</button>`).join('') + '</div>';
+    promoEl.hidden = false;
+    promoEl.querySelector<HTMLButtonElement>('button')!.focus();
+    promoEl.onclick = (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-p]');
+      if (btn) { closePromo(); tryMove(from, to, btn.dataset.p as 'q' | 'r' | 'b' | 'n'); }
+      else if (e.target === promoEl) { closePromo(); selected = null; render(); }
+    };
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !promoEl.hidden) { closePromo(); selected = null; render(); } });
+
+  function tryMove(from: Square, to: Square, promo?: 'q' | 'r' | 'b' | 'n') {
+    const cands2 = game.moves({ square: from, verbose: true }).filter((m) => m.to === to);
+    if (!cands2.length) return false;
+    if (cands2[0].promotion && !promo) { askPromotion(from, to, game.turn()); return true; }
+    let mv: Move | null = null;
+    try { mv = game.move({ from, to, promotion: promo }); } catch { mv = null; }
+    if (!mv) return false;
+    last = { from: mv.from, to: mv.to }; selected = null;
+    if (loaded) leavePgn();
+    clearResult();
+    mv.captured ? sfx.capture() : sfx.move();
+    if (game.inCheck()) setTimeout(sfx.check, 120);
+    render(mv.to);
+    return true;
+  }
+  boardEl.addEventListener('click', (e) => {
+    const t = (e.target as HTMLElement).closest<HTMLElement>('.sq'); if (!t) return;
+    const sq = t.dataset.sq as Square;
+    if (selected && selected !== sq && tryMove(selected, sq)) return;
+    const p = game.get(sq);
+    selected = p && p.color === game.turn() && selected !== sq ? sq : null;
+    render();
+  });
+
+  // ---------- Resultado / motor ----------
+  function setEvalBar(pct: number, label: string) {
+    const h = flipped ? 100 - pct : pct; // pct = % de ventaja blanca
+    ($('evalV') as HTMLElement).style.height = h + '%';
+    $('evalVtxt').textContent = label;
+  }
+  function clearResult() {
+    cands = []; $('bestMove').textContent = '—'; $('evalTxt').textContent = 'Pulsa «Analizar» para calcular.';
+    $('pv').textContent = ''; setEvalBar(50, '0.0'); $('err').hidden = true;
+  }
+  let worker: Worker | null = null; let ready: Promise<void> | null = null;
+  function startEngine(): Promise<void> {
+    if (ready) return ready;
+    ready = new Promise((resolve, reject) => {
+      try { worker = new Worker('/engine/stockfish-19-lite-single.js'); } catch (e) { reject(e); return; }
+      const to = setTimeout(() => reject(new Error('timeout')), 25000);
+      worker.onerror = () => { clearTimeout(to); reject(new Error('worker')); };
+      worker.onmessage = (ev) => { if (String(ev.data).includes('readyok')) { clearTimeout(to); worker!.onmessage = null; resolve(); } };
+      worker.postMessage('uci'); worker.postMessage('isready');
+    });
+    ready.catch(() => { ready = null; worker = null; });
+    return ready;
+  }
+  function quota() {
+    if (isPremium()) return { key: '', used: 0, left: Infinity };
+    const key = 'ngm-quota-' + new Date().toISOString().slice(0, 10);
+    let used = 0; try { used = Number(localStorage.getItem(key) || 0); } catch {}
+    return { key, used, left: Math.max(0, FREE - used) };
+  }
+  function syncPremiumUI() {
+    const prem = isPremium();
+    const sel = $('depth') as HTMLSelectElement;
+    sel.querySelectorAll<HTMLOptionElement>('option[data-premium]').forEach((o) => {
+      o.disabled = !prem;
+      o.textContent = prem ? 'Máximo (el más preciso)' : '🔒 Máximo · plan ilimitado';
+    });
+    if (!prem && sel.selectedOptions[0]?.hasAttribute('data-premium')) sel.value = '14';
+  }
+  function showQuota() {
+    syncPremiumUI();
+    const q = quota();
+    if (q.left === Infinity) { $('quota').innerHTML = '✓ <strong>Plan ilimitado activo.</strong> Analiza todo lo que quieras.'; return; }
+    $('quota').innerHTML = q.left > 0
+      ? `Plan gratis: te quedan <strong>${q.left}</strong> de ${FREE} análisis hoy. <a href="/precios">Ver plan ilimitado</a>`
+      : `Has usado tus ${FREE} análisis gratis de hoy. <a href="/precios">Consigue análisis ilimitados</a>`;
+  }
+  type Line = { cp: number | null; mate: number | null; d: number; pv: string[] };
+  function fmt(l: Line, whiteTurn: boolean) {
+    if (l.mate !== null) { const m = whiteTurn ? l.mate : -l.mate; return { short: (m > 0 ? '+M' : '−M') + Math.abs(m), txt: `Mate en ${Math.abs(m)} a favor de las ${m > 0 ? 'blancas' : 'negras'}`, pct: m > 0 ? 100 : 0 }; }
+    const w = (whiteTurn ? l.cp! : -l.cp!) / 100;
+    const pct = 50 + 50 * (2 / (1 + Math.exp(-0.5 * w)) - 1);
+    return { short: (w > 0 ? '+' : '') + w.toFixed(2), txt: `Evaluación ${w > 0 ? '+' : ''}${w.toFixed(2)} (${w > 0.3 ? 'ventaja blancas' : w < -0.3 ? 'ventaja negras' : 'igualado'})`, pct: Math.max(3, Math.min(97, pct)) };
+  }
+
+  async function analyze() {
+    const btn = $<HTMLButtonElement>('analyze'); const err = $('err'); err.hidden = true;
+    if (game.isGameOver()) { err.textContent = 'La partida ha terminado: no hay más jugadas.'; err.hidden = false; sfx.error(); return; }
+    const q = quota();
+    if (q.left <= 0) { err.innerHTML = 'Has agotado los análisis gratis de hoy. <a href="/precios">Mira el plan ilimitado</a>.'; err.hidden = false; sfx.error(); return; }
+    btn.disabled = true; btn.classList.add('loading'); $('thinking').hidden = false;
+    try {
+      await startEngine();
+      const fen = game.fen(); const whiteTurn = game.turn() === 'w';
+      let depth = Number(($('depth') as HTMLSelectElement).value);
+      if (depth > 18 && !isPremium()) depth = 18;
+      const lines = new Map<number, Line>();
+      const bm: string = await new Promise((resolve, reject) => {
+        const to = setTimeout(() => worker!.postMessage('stop'), 30000);
+        worker!.onmessage = (ev) => {
+          const s = String(ev.data);
+          if (s.startsWith('info') && s.includes(' pv ') && !s.includes('lowerbound') && !s.includes('upperbound')) {
+            const d = /depth (\d+)/.exec(s); const cp = /score cp (-?\d+)/.exec(s); const mt = /score mate (-?\d+)/.exec(s);
+            const pv = /\spv (.+)$/.exec(s); const k = /multipv (\d+)/.exec(s);
+            if (d && pv) lines.set(k ? +k[1] : 1, { d: +d[1], cp: cp ? +cp[1] : null, mate: mt ? +mt[1] : null, pv: pv[1].trim().split(' ') });
+            const l1 = lines.get(1);
+            if (l1 && (l1.cp !== null || l1.mate !== null)) { const f = fmt(l1, whiteTurn); $('evalTxt').textContent = `${f.txt} · prof. ${l1.d}`; setEvalBar(f.pct, f.short); }
+          } else if (s.startsWith('bestmove')) { clearTimeout(to); resolve(s.split(' ')[1]); }
+        };
+        worker!.onerror = () => { clearTimeout(to); reject(new Error('worker')); };
+        worker!.postMessage('ucinewgame'); worker!.postMessage('position fen ' + fen); worker!.postMessage('go depth ' + depth);
+      });
+      if (!bm || bm === '(none)') throw new Error('nomove');
+      cands = [];
+      [...lines.keys()].sort((a, b) => a - b).slice(0, 1).forEach((k) => {
+        const l = lines.get(k)!; const u = l.pv[0]; if (!u) return;
+        try {
+          const t = new Chess(fen); const mv = t.move({ from: u.slice(0, 2) as Square, to: u.slice(2, 4) as Square, promotion: u[4] });
+          cands.push({ from: mv.from, to: mv.to, san: mv.san, txt: fmt(l, whiteTurn).short });
+        } catch {}
+      });
+      if (!cands.length) throw new Error('nomove');
+      $('bestMove').textContent = es(cands[0].san);
+      const l1 = lines.get(1)!; const f1 = fmt(l1, whiteTurn);
+      $('evalTxt').textContent = `${f1.txt} · prof. ${l1.d}`; setEvalBar(f1.pct, f1.short);
+      const line: string[] = []; const t2 = new Chess(fen);
+      for (const u of l1.pv.slice(0, 8)) { try { line.push(es(t2.move({ from: u.slice(0, 2) as Square, to: u.slice(2, 4) as Square, promotion: u[4] }).san)); } catch { break; } }
+      $('pv').textContent = line.length > 1 ? 'Línea principal: ' + line.join(' ') : '';
+      if (q.key) { try { localStorage.setItem(q.key, String(q.used + 1)); } catch {} queueSync(); }
+      sfx.done(); render();
+    } catch {
+      err.textContent = 'No se pudo cargar el motor de análisis. Comprueba tu conexión y recarga la página.'; err.hidden = false; sfx.error();
+    } finally { btn.disabled = false; btn.classList.remove('loading'); $('thinking').hidden = true; showQuota(); }
+  }
+
+  // ---------- Controles ----------
+  $('analyze').addEventListener('click', analyze);
+  $('undo').addEventListener('click', () => { if (loaded) { gotoPly(ply - 1); return; } if (game.undo()) { const h = game.history({ verbose: true }); const l = h[h.length - 1]; last = l ? { from: l.from, to: l.to } : null; selected = null; clearResult(); sfx.move(); render(); } });
+  $('flip').addEventListener('click', () => { flipped = !flipped; render(); });
+  $('reset').addEventListener('click', () => { leavePgn(); game = new Chess(); startFen = game.fen(); last = null; selected = null; clearResult(); sfx.move(); render(); });
+  $('sound').addEventListener('click', () => { soundOn = !soundOn; try { localStorage.setItem('ngm-sound', soundOn ? 'on' : 'off'); } catch {} syncSoundBtn(); sfx.move(); });
+  $('loadFen').addEventListener('click', () => {
+    const msg = $('fenMsg');
+    try { const gg = new Chess(fenEl.value.trim()); leavePgn(); game = gg; startFen = game.fen(); last = null; selected = null; clearResult(); msg.textContent = 'Posición cargada.'; render(); }
+    catch { msg.textContent = 'FEN no válido. Revisa el texto (ejemplo: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1).'; sfx.error(); }
+  });
+  $('copyFen').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(game.fen()); $('fenMsg').textContent = 'FEN copiado.'; } catch { fenEl.select(); $('fenMsg').textContent = 'Selecciona y copia el texto manualmente.'; }
+  });
+
+  $('n-first').addEventListener('click', () => gotoPly(0));
+  $('n-prev').addEventListener('click', () => gotoPly(ply - 1));
+  $('n-next').addEventListener('click', () => gotoPly(ply + 1));
+  $('n-last').addEventListener('click', () => loaded && gotoPly(loaded.sans.length));
+  document.addEventListener('keydown', (e) => {
+    if (!loaded || !promoEl.hidden) return;
+    const tag = (e.target as HTMLElement).tagName; if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); gotoPly(ply - 1); } else if (e.key === 'ArrowRight') { e.preventDefault(); gotoPly(ply + 1); }
+  });
+  $('loadPgn').addEventListener('click', () => {
+    const msg = $('pgnMsg');
+    if (loadPgnText(($('pgn') as HTMLTextAreaElement).value, false)) msg.textContent = 'Partida cargada. Recórrela con las flechas y analiza la posición que quieras.';
+    else { msg.textContent = 'No se pudo leer el PGN. Cópialo completo, con las jugadas (por ejemplo: 1. e4 e5 2. Cf3…, en notación inglesa: 1. e4 e5 2. Nf3).'; sfx.error(); }
+  });
+  $('copyPgn').addEventListener('click', async () => {
+    const g = new Chess(); try { if (loaded) { g.load(loaded.start); loaded.sans.forEach((m) => g.move(m)); } else { g.load(startFen); game.history().forEach((m) => g.move(m)); } } catch {}
+    const txt = g.pgn();
+    try { await navigator.clipboard.writeText(txt); $('pgnMsg').textContent = 'PGN copiado.'; } catch { ($('pgn') as HTMLTextAreaElement).value = txt; $('pgnMsg').textContent = 'Copia el texto de la caja manualmente.'; }
+  });
+  // Partida enviada desde «Jugar contra bots»
+  let handoff: string | null = null;
+  try { handoff = sessionStorage.getItem('ngm-handoff'); sessionStorage.removeItem('ngm-handoff'); } catch {}
+
+  syncSoundBtn(); showQuota(); render();
+  if (cachedUser()) syncNow().then(() => showQuota());
+  if (handoff && loadPgnText(handoff, true)) { $('pgnMsg').textContent = 'Partida cargada desde «Jugar». Elige una jugada con las flechas y pulsa «Analizar posición».'; ($('pgn') as HTMLTextAreaElement).value = handoff; }
+  refreshPremium().then(showQuota);
+</script>

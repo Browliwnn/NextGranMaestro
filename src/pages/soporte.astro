@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import { SUPPORT_URL, CONTACT_EMAIL, PORTAL_URL } from '../config';
+const jsonLd = [{ '@context': 'https://schema.org', '@type': 'ContactPage', name: 'Atención al cliente de NextGranMaestro', url: SUPPORT_URL, mainEntity: { '@type': 'Organization', name: 'NextGranMaestro', contactPoint: { '@type': 'ContactPoint', contactType: 'customer support', url: SUPPORT_URL, availableLanguage: 'es' } } }];
+const quick = [
+  { t: 'Mi plan no aparece o cambié de dispositivo', d: 'Un plan funciona en un dispositivo a la vez. Para pasarlo, usa Traspasar plan.', h: '/traspasar', c: 'Traspasar plan' },
+  { t: 'No puedo entrar a mi cuenta', d: 'Si has olvidado la contraseña, puedes pedir un enlace para cambiarla.', h: '/entrar', c: 'Entrar o recuperar contraseña' },
+  { t: 'Quiero ver qué plan tengo', d: 'Consulta si tu plan está activo en este dispositivo.', h: '/cuenta', c: 'Mi plan' },
+  { t: 'Pagué y no se activó', d: 'Vuelve a abrir el enlace de «gracias» que te dio Stripe tras pagar, o escríbenos con tu recibo.', h: '/faq', c: 'Ver preguntas frecuentes' },
+  { t: 'Quiero cancelar mi suscripción', d: PORTAL_URL ? 'Puedes cancelar tú mismo desde el portal de cliente.' : 'Usa el enlace de gestión que Stripe te envía en el recibo de pago, o pídenoslo.', h: PORTAL_URL || '/faq', c: PORTAL_URL ? 'Gestionar suscripción' : 'Cómo cancelar' },
+];
+---
+<Base title="Atención al cliente" description="¿Necesitas ayuda con NextGranMaestro? Habla con nosotros en el canal de soporte de Discord: dudas del plan, pagos, traspaso de dispositivo y problemas técnicos." crumbs={[{ name: 'Atención al cliente', href: '/soporte' }]} jsonLd={jsonLd}>
+  <div class="page-head wrap" style="text-align:center">
+    <span class="eyebrow">Atención al cliente</span>
+    <h1>Estamos para ayudarte</h1>
+    <p class="muted" style="max-width:58ch;margin-inline:auto">Escríbenos en nuestro canal de soporte de Discord. Cuéntanos qué te pasa y te ayudamos lo antes posible.</p>
+    <p style="margin-top:1.4rem"><a class="btn btn-primary" href={SUPPORT_URL} rel="noopener noreferrer" target="_blank">Abrir el soporte en Discord <span class="sr-only">(se abre en una pestaña nueva)</span></a></p>
+    {CONTACT_EMAIL && <p class="muted small-p">¿Prefieres el correo? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>}
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head"><span class="eyebrow">Ayuda rápida</span><h2>Quizá lo resuelves ahora mismo</h2></div>
+      <div class="help">
+        {quick.map((q) => <article class="card"><h3>{q.t}</h3><p class="muted">{q.d}</p><a class="btn btn-sm" href={q.h}>{q.c}</a></article>)}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="narrow">
+      <h2>Para que podamos ayudarte antes</h2>
+      <ul class="ticks">
+        <li>Cuéntanos qué intentabas hacer y qué ha pasado en su lugar.</li>
+        <li>Indica el dispositivo y el navegador (por ejemplo, «iPhone, Safari»).</li>
+        <li>Si es un problema de pago, ten a mano el correo del recibo de Stripe.</li>
+        <li>Una captura de pantalla ayuda mucho.</li>
+      </ul>
+      <p class="notice"><strong>Cuida tu seguridad.</strong> Nadie de NextGranMaestro te pedirá nunca el número de tu tarjeta, contraseñas, ni tu código de activación del plan. No los compartas con nadie, ni en Discord ni en mensajes privados. Desconfía de quien te escriba por privado ofreciendo ayuda.</p>
+    </div>
+  </section>
+</Base>
+<style>
+  .small-p{font-size:.92rem;margin:.8rem 0 0}
+  .help{display:grid;gap:1.2rem;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .help .card{display:flex;flex-direction:column;gap:.4rem}.help .card p{flex:1;margin:0}.help .card .btn{align-self:flex-start;margin-top:.6rem}
+  .ticks{margin:.8rem 0;padding-left:1.2rem}.ticks li{margin:.4rem 0}
+</style>

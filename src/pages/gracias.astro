@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+import { PORTAL_URL, SUPPORT_URL } from '../config';
+---
+<Base title="Activando tu plan" description="Activación del plan ilimitado de NextGranMaestro." noindex={true}>
+  <div class="narrow" style="text-align:center;padding-block:4rem">
+    <div id="st-wait" aria-live="polite">
+      <p style="font-size:3rem;margin:0" aria-hidden="true">⏳</p>
+      <h1>Activando tu plan…</h1>
+      <p class="muted">Estamos confirmando tu pago con Stripe. Tarda unos segundos.</p>
+    </div>
+    <div id="st-ok" hidden>
+      <p style="font-size:3rem;margin:0" aria-hidden="true">♛</p>
+      <h1>¡Plan ilimitado activado!</h1>
+      <p class="muted">Gracias por apoyar NextGranMaestro. Ya puedes analizar sin límite en este navegador.</p>
+      <p><a class="btn btn-primary" href="/analizador">Ir al analizador</a> <a class="btn" href="/entrenamiento">Empezar a entrenar</a></p>
+      <div id="save-acc" class="notice" hidden style="max-width:52ch;margin:1.5rem auto 0;text-align:left"><strong>Guarda tu plan en una cuenta.</strong> Sin cuenta, si pierdes este dispositivo o borras los datos del navegador tendrás que pedir ayuda para recuperarlo. <a class="btn btn-primary btn-sm" style="margin-left:.4rem" href="/entrar?crear=1&next=/cuenta">Crear cuenta</a></div>
+      <p class="muted small-note" id="linked-note" hidden>✓ Tu plan está guardado en tu cuenta: puedes recuperarlo desde cualquier dispositivo.</p>
+      <p class="muted small-note">Tu plan está activo en este dispositivo y funciona en un dispositivo a la vez. Si cambias de móvil u ordenador, inicia sesión en el nuevo o usa <a href="/traspasar">Traspasar plan</a>. Consulta tu plan en <a href="/cuenta">Mi plan</a>.{PORTAL_URL ? <span> Gestiona o cancela tu suscripción <a href={PORTAL_URL} rel="noopener">aquí</a>.</span> : null}</p>
+    </div>
+    <div id="st-err" hidden>
+      <p style="font-size:3rem;margin:0" aria-hidden="true">⚠️</p>
+      <h1>No hemos podido activar el plan</h1>
+      <p id="st-msg" class="muted"></p>
+      <p><a class="btn" href="/precios">Volver a precios</a> <a class="btn" href={SUPPORT_URL} rel="noopener noreferrer" target="_blank">Hablar con soporte</a></p>
+    </div>
+  </div>
+</Base>
+<style>.small-note{font-size:.85rem;max-width:52ch;margin:2rem auto 0}</style>
+<script>
+  import { activateFromCheckout } from '../utils/premium';
+  const $ = (id: string) => document.getElementById(id)!;
+  const show = (id: string) => { ['st-wait', 'st-ok', 'st-err'].forEach((x) => ($(x).hidden = x !== id)); };
+  const MSG: Record<string, string> = {
+    account_required: 'Este pago no se hizo desde una cuenta. Inicia sesión en la cuenta con la que pagaste y vuelve a abrir este enlace, o escríbenos con tu comprobante de Stripe.',
+    not_paid: 'El pago aún no figura como completado. Espera un minuto y recarga esta página.',
+    subscription_inactive: 'La suscripción no está activa.',
+    session_not_found: 'No encontramos ese pago. Comprueba que has abierto el enlace completo.',
+    invalid_session: 'El enlace no es válido. Si acabas de pagar, vuelve a abrir el enlace que te dio Stripe.',
+    server_not_configured: 'El servidor de pagos aún no está configurado.',
+    registry_unavailable: 'El servidor está ocupado. Recarga esta página en unos segundos: tu pago está a salvo.',
+    stripe_unavailable: 'No pudimos hablar con Stripe ahora mismo. Recarga esta página en unos segundos: tu pago está a salvo.',
+  };
+  (async () => {
+    const id = new URLSearchParams(location.search).get('session_id');
+    if (!id) { $('st-msg').textContent = MSG.invalid_session; show('st-err'); return; }
+    const r = await activateFromCheckout(id);
+    if (r.ok) { show('st-ok'); if (r.linked) $('linked-note').hidden = false; else $('save-acc').hidden = false; return; }
+    $('st-msg').textContent = r.error === 'network' ? 'No hay conexión con el servidor. Recarga la página en unos segundos.' : (MSG[r.error || ''] || 'Ha ocurrido un error. Escríbenos con tu comprobante de pago de Stripe y lo resolvemos.');
+    show('st-err');
+  })();
+</script>

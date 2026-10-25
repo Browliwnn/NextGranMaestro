@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import { ANALYTICS_TOKEN } from '../config';
+---
+<Base title="Política de cookies" description="NextGranMaestro no usa cookies de analítica ni publicidad. Solo guarda en tu navegador dos preferencias técnicas." crumbs={[{ name: 'Política de cookies', href: '/cookies' }]}>
+  <div class="page-head narrow"><h1>Política de cookies</h1></div>
+  <div class="narrow prose" style="padding-bottom:3rem">
+    <p class="notice">Última actualización: 21 de octubre de 2026.</p>
+    <p>Actualmente NextGranMaestro <strong>no utiliza cookies de publicidad ni de seguimiento</strong>.</p>
+    <h2>Almacenamiento técnico</h2>
+    <p>Si inicias sesión usamos una <strong>cookie de sesión</strong> (<code>ngm_s</code>), imprescindible para mantenerte conectado: es técnica, no sirve para publicidad ni seguimiento, y caduca a los 30 días o al cerrar sesión. No necesita consentimiento.</p>
+    <p>Usamos además el almacenamiento local del navegador (localStorage), necesario para el funcionamiento del servicio:</p>
+    <ul>
+      <li><code>ngm-quota-AAAA-MM-DD</code>: cuenta los análisis gratuitos usados en el día.</li>
+      <li><code>ngm-sound</code>: recuerda si has activado o desactivado los sonidos.</li>
+      <li><code>ngm-train</code> y <code>ngm-bots</code>: tu progreso en el entrenamiento y tus marcas contra los bots.</li>
+      <li><code>ngm-user</code> y <code>ngm-sync-ts</code>: resumen de tu sesión (sin contraseña) y hora de la última sincronización, solo si tienes cuenta.</li>
+      <li><code>ngm-dev</code>: identificador aleatorio de este navegador, necesario para que el plan funcione en un solo dispositivo.</li>
+      <li><code>ngm-token</code>, <code>ngm-prem-ok</code>, <code>ngm-plan</code> y <code>ngm-moved</code>: código de activación del plan ilimitado, fecha de su última comprobación, tipo de plan y aviso de traspaso (solo si has contratado el plan).</li>
+    </ul>
+    <p>Puedes borrarlos en cualquier momento desde los ajustes de tu navegador.</p>
+    {ANALYTICS_TOKEN && (<Fragment><h2>Estadísticas de visitas</h2><p>Medimos las visitas con Cloudflare Web Analytics, un servicio que <strong>no usa cookies ni almacena datos en tu dispositivo</strong> y no te sigue entre sitios web. Solo obtenemos cifras agregadas (páginas vistas, países, tipo de dispositivo).</p></Fragment>)}
+    <h2>Terceros</h2>
+    <p>Cloudflare, que aloja la web, puede establecer cookies técnicas de seguridad en algunas circunstancias. Al pagar serás redirigido a Stripe, que aplica su propia política de cookies en su página de pago.</p>
+  </div>
+</Base>

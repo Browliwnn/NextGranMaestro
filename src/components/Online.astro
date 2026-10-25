@@ -1,0 +1,303 @@
+---
+import '../styles/board.css';
+import { defsSvg } from '../utils/pieces';
+const TCS = [['1+0', 'Bala', '1 min'], ['3+0', 'Blitz', '3 min'], ['3+2', 'Blitz', '3 min + 2 s'], ['5+0', 'Blitz', '5 min'], ['10+0', 'Rápidas', '10 min'], ['15+10', 'Rápidas', '15 min + 10 s']];
+---
+<Fragment set:html={defsSvg} />
+<div class="on" id="on-root">
+  <section class="card" id="on-gate" hidden>
+    <h2 class="h-sm">Entra para jugar en línea</h2>
+    <p class="muted" id="on-gate-msg">Necesitas una cuenta (gratis) para tener tu Elo y jugar contra otras personas.</p>
+    <p><a class="btn btn-primary" id="on-gate-btn" href="/entrar?next=/online">Entrar o crear cuenta</a></p>
+  </section>
+
+  <div id="on-lobby" hidden>
+    <div class="on-live" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="on-live-t">Conectando…</span></div>
+    <div class="on-grid">
+      <section class="card">
+        <p class="eyebrow">Tu perfil</p>
+        <h2 class="h-sm"><span id="on-nick">—</span> <span class="on-elo" id="on-elo">1200</span></h2>
+        <p class="muted small" id="on-rec"></p>
+        <form id="on-nick-f" class="on-nickf" novalidate>
+          <label for="on-nick-i" class="small muted">Cambiar apodo (3–16 letras, números, _ . -)</label>
+          <div class="row"><input id="on-nick-i" maxlength="16" autocomplete="off" /><button class="btn btn-sm" type="submit">Guardar</button></div>
+          <p class="small err" id="on-nick-e" role="alert" hidden></p>
+        </form>
+        <h3 class="bt-group">Elige el ritmo y busca rival</h3>
+        <div class="on-tcs" role="radiogroup" aria-label="Ritmo de juego">
+          {TCS.map(([id, name, desc]) => (<button type="button" class="on-tc" role="radio" aria-checked={id === '5+0' ? 'true' : 'false'} data-tc={id}><strong>{id.replace('+', ' + ')}</strong><span>{name}</span><small>{desc}</small><em data-tcn={id}></em></button>))}
+        </div>
+        <p class="small muted" id="on-limit"></p>
+        <button class="btn btn-primary" id="on-seek" type="button">Buscar rival</button>
+        <button class="btn" id="on-cancel" type="button" hidden>Cancelar búsqueda</button>
+        <p class="small" id="on-search-t" role="status" aria-live="polite"></p>
+        <p class="small err" id="on-msg" role="alert" hidden></p>
+      </section>
+      <section class="card">
+        <p class="eyebrow">En línea ahora</p>
+        <ul class="on-list" id="on-players" aria-label="Jugadores conectados"></ul>
+        <p class="muted small" id="on-players-empty" hidden>Ahora mismo no hay nadie más conectado. Puedes <a href="/jugar">jugar contra un bot</a> o volver más tarde.</p>
+        <h3 class="bt-group">Partidas en directo</h3>
+        <ul class="on-list" id="on-games"></ul>
+        <p class="muted small" id="on-games-empty">No hay partidas en curso.</p>
+      </section>
+      <section class="card">
+        <p class="eyebrow">Ranking</p>
+        <ol class="on-list on-rank" id="on-rank"></ol>
+        <p class="muted small" id="on-rank-empty" hidden>Todavía no hay partidas puntuadas. ¡Sé el primero!</p>
+      </section>
+      <section class="card">
+        <p class="eyebrow">Tus últimas partidas</p>
+        <ul class="on-list" id="on-hist"></ul>
+        <p class="muted small" id="on-hist-empty">Aún no has jugado en línea.</p>
+      </section>
+    </div>
+  </div>
+
+  <div id="on-game" hidden>
+    <div class="bt">
+      <div class="bt-board-col">
+        <div class="on-pl" id="on-top"><span class="who"><span id="on-top-n"></span> <small id="on-top-e"></small> <i class="off" id="on-top-off" hidden>desconectado</i></span><span class="clk" id="on-top-c">0:00</span></div>
+        <div class="tr-stage"><div class="frame"><div class="board-wrap">
+          <div id="on-board" class="board" role="group" aria-label="Tablero de la partida en línea"></div>
+          <div class="promo" id="on-promo" role="dialog" aria-modal="true" aria-label="Elige la pieza para coronar el peón" hidden></div>
+        </div></div></div>
+        <div class="on-pl" id="on-bot"><span class="who"><span id="on-bot-n"></span> <small id="on-bot-e"></small></span><span class="clk" id="on-bot-c">0:00</span></div>
+      </div>
+      <div class="bt-panel"><div class="card">
+        <p class="eyebrow" id="on-g-tc">Partida</p>
+        <h2 class="h-sm" id="on-g-turn" aria-live="polite">—</h2>
+        <p id="on-g-note" class="feedback" role="status" aria-live="polite"></p>
+        <div class="tr-tools bt-act" role="group" aria-label="Acciones de la partida">
+          <button class="btn btn-sm" id="on-draw" type="button">🤝 Tablas</button>
+          <button class="btn btn-sm" id="on-abort" type="button">Anular</button>
+          <button class="btn btn-sm" id="on-resign" type="button">🏳 Rendirme</button>
+          <button class="btn btn-sm" id="on-flip" type="button">⇅ Girar</button>
+        </div>
+        <div class="notice" id="on-offer" hidden><strong>Tu rival ofrece tablas.</strong> <button class="btn btn-sm btn-primary" id="on-offer-y" type="button">Aceptar</button> <button class="btn btn-sm" id="on-offer-n" type="button">Rechazar</button></div>
+        <p class="moves bt-moves" id="on-moves" role="log" aria-label="Jugadas"></p>
+        <div class="tr-tools bt-act" id="on-quick" role="group" aria-label="Mensajes rápidos"></div>
+        <p class="small muted" id="on-said" aria-live="polite"></p>
+        <div id="on-end" class="on-end" hidden>
+          <h3 class="h-sm" id="on-end-t"></h3><p id="on-end-d"></p>
+          <div class="tr-tools bt-act">
+            <button class="btn btn-primary btn-sm" id="on-again" type="button">Buscar otro rival</button>
+            <button class="btn btn-sm" id="on-analyze" type="button">🔍 Analizar partida</button>
+            <button class="btn btn-sm" id="on-report" type="button">🚩 Denunciar</button>
+          </div>
+          <p class="small" id="on-report-m" role="status"></p>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .on .card{margin-bottom:1rem}
+  .on-live{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .9rem;border:1px solid var(--line);border-radius:99px;margin-bottom:1rem;font-weight:600}
+  .on-live .dot{width:.6rem;height:.6rem;border-radius:50%;background:#3ddc97;box-shadow:0 0 0 0 rgba(61,220,151,.6);animation:onp 2s infinite}
+  .on-live.off .dot{background:#888;animation:none}
+  @keyframes onp{70%{box-shadow:0 0 0 8px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+  @media (prefers-reduced-motion:reduce){.on-live .dot{animation:none}}
+  .on-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start}
+  .on-elo{font:700 1rem ui-monospace,Menlo,Consolas,monospace;color:var(--gold);margin-left:.4rem}
+  .on-nickf{margin:.6rem 0}.on-nickf .row{display:flex;gap:.5rem;margin-top:.3rem}.on-nickf input{flex:1;min-height:40px}
+  .on-tcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.5rem;margin:.5rem 0 1rem}
+  .on-tc{display:grid;gap:.1rem;text-align:left;padding:.6rem .7rem;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);cursor:pointer;font:inherit;min-height:44px}
+  .on-tc[aria-checked="true"]{border-color:var(--gold);background:rgba(214,176,92,.16);box-shadow:0 0 0 1px var(--gold)}
+  .on-tc span{font-size:.8rem;color:var(--gold)}.on-tc small{color:var(--muted)}.on-tc em{font-style:normal;font-size:.75rem;color:#7be3a6}.on-tc em:empty{display:none}
+  .on-list{list-style:none;margin:.4rem 0;padding:0;display:grid;gap:.3rem}
+  .on-list li{display:flex;justify-content:space-between;gap:.5rem;padding:.35rem .6rem;border:1px solid var(--line);border-radius:8px;font-size:.92rem}
+  .on-list .e{font:600 .85rem ui-monospace,Menlo,Consolas,monospace;color:var(--gold)}
+  .on-list .s{color:var(--muted);font-size:.8rem}.on-list .me{border-color:var(--gold)}
+  .on-list .w{color:#7be3a6}.on-list .l{color:#ffb3b3}
+  .on-rank{counter-reset:r}.on-rank li::before{counter-increment:r;content:counter(r)'.';width:1.8rem;color:var(--muted)}.on-rank li span.n{flex:1}
+  .on-pl{display:flex;justify-content:space-between;align-items:center;width:min(100%,690px);margin:.4rem auto;padding:.4rem .7rem;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+  .on-pl small{color:var(--gold);font-family:ui-monospace,Menlo,Consolas,monospace}.on-pl .off{color:#ffb3b3;font-size:.8rem}
+  .on-pl .clk{font:700 1.5rem ui-monospace,Menlo,Consolas,monospace;min-width:4.5ch;text-align:right}
+  .on-pl.act{border-color:var(--gold)}.on-pl.low .clk{color:#ff8a8a}
+  .on-end{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line)}
+  .on .err{color:#ffb3b3}
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+  import type { Square } from 'chess.js';
+  import { pieceSvg } from '../utils/pieces';
+  import { sfx, sound } from '../utils/sfx';
+  import { cachedUser, me } from '../utils/account';
+  import { getTicket, connectLobby, connectGame, fetchBoard, report, gamePgn, liveClocks, fmtClock, type Profile, type Stats, type GameState, type Conn } from '../utils/online-client';
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const files = 'abcdefgh'; const ES: Record<string, string> = { N: 'C', B: 'A', R: 'T', Q: 'D', K: 'R' };
+  const es = (san: string) => san.replace(/^[NBRQK]/, (m) => ES[m]).replace(/=([NBRQ])/, (_, p) => '=' + ES[p]);
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  const REASON: Record<string, string> = { mate: 'jaque mate', abandono: 'abandono', tiempo: 'tiempo agotado', desconexion: 'desconexión', ahogado: 'rey ahogado', material: 'material insuficiente', '50': 'regla de los 50 movimientos', repeticion: 'repetición de posición', acuerdo: 'acuerdo de tablas', anulada: 'partida anulada' };
+  let profile: Profile | null = null; let lobby: Conn | null = null; let gameConn: Conn | null = null; let tc = '5+0'; let seeking = false; let seekAt = 0; let tick: number | undefined;
+  let gid = ''; let gs: GameState | null = null; let recvAt = 0; let myColor: 'w' | 'b' = 'w'; let flipped = false; let selected: string | null = null; let pending: { from: string; to: string } | null = null; let quick: string[] = []; let lastSeenMoves = 0;
+
+  // ---------- Arranque ----------
+  async function start() {
+    const u = cachedUser() ? await me() : await me(true);
+    if (!u) { $('on-gate').hidden = false; return; }
+    if (u.verifyRequired && !u.verified) { $('on-gate').hidden = false; $('on-gate-msg').textContent = 'Confirma tu email (te lo hemos enviado) para jugar en línea. Puedes reenviarlo desde Mi cuenta.'; ($('on-gate-btn') as HTMLAnchorElement).href = '/cuenta'; $('on-gate-btn').textContent = 'Ir a Mi cuenta'; return; }
+    const t = await getTicket(); if (!t.ok || !t.profile) { $('on-gate').hidden = false; $('on-gate-msg').textContent = 'Los duelos en línea no están disponibles ahora mismo. Inténtalo en unos minutos.'; $('on-gate-btn').hidden = true; return; }
+    profile = t.profile; paintProfile(); $('on-lobby').hidden = false; showLive(null, false); loadBoard(); paintHist();
+    lobby = connectLobby(onLobby, (up) => { if (!up) showLive(null, false); });
+  }
+  const showLive = (s: Stats | null, up: boolean) => {
+    const el = $('on-live-t'); el.parentElement!.classList.toggle('off', !up);
+    el.textContent = !s ? (up ? 'Conectado' : 'Conectando…') : `${s.online} en línea · ${s.playing} jugando · ${s.searching} buscando rival`;
+  };
+  function paintProfile() {
+    if (!profile) return;
+    $('on-nick').textContent = profile.n; $('on-elo').textContent = String(profile.e);
+    $('on-rec').textContent = `${profile.g} partidas · ${profile.w} ganadas · ${profile.d} tablas · ${profile.l} perdidas`;
+    $('on-limit').textContent = profile.premium ? '♛ Plan ilimitado: duelos sin límite.' : `Plan gratis: ${Math.max(0, (profile.limit || 0) - profile.used)} de ${profile.limit} duelos hoy. Con el plan ilimitado, sin límite.`;
+  }
+  function paintHist() {
+    const ul = $('on-hist'); ul.innerHTML = '';
+    for (const h of profile?.hist || []) {
+      const li = document.createElement('li'); const res = h.r === 'w' ? 'Ganada' : h.r === 'd' ? 'Tablas' : 'Perdida';
+      li.innerHTML = `<span><strong class="${h.r}">${res}</strong> vs ${esc(h.opp)} <span class="s">(${h.oe})</span></span><span class="e">${h.d > 0 ? '+' : ''}${h.d}</span>`; ul.appendChild(li);
+    }
+    $('on-hist-empty').hidden = !!(profile?.hist || []).length;
+  }
+  async function loadBoard() {
+    const top = await fetchBoard(); const ol = $('on-rank'); ol.innerHTML = '';
+    top.forEach((x) => { const li = document.createElement('li'); if (x.n === profile?.n) li.className = 'me'; li.innerHTML = `<span class="n">${esc(x.n)}</span><span class="e">${x.e}</span>`; ol.appendChild(li); });
+    $('on-rank-empty').hidden = top.length > 0;
+  }
+
+  // ---------- Sala común ----------
+  function onLobby(m: any) {
+    if (m.t === 'fatal') { stopAll(); $('on-lobby').hidden = true; $('on-gate').hidden = false; $('on-gate-msg').textContent = m.e === 'replaced' ? 'Has abierto el modo en línea en otra pestaña o dispositivo. Pulsa para volver aquí.' : 'Tu sesión ha caducado. Entra de nuevo.'; ($('on-gate-btn') as HTMLAnchorElement).href = m.e === 'replaced' ? '/online' : '/entrar?next=/online'; $('on-gate-btn').textContent = m.e === 'replaced' ? 'Volver a conectar' : 'Entrar'; return; }
+    if (m.t === 'hello') { quick = m.quick || []; showLive(null, true); if (m.resume) openGame(m.resume); lobby?.send({ t: 'stats' }); }
+    else if (m.t === 'stats') paintStats(m);
+    else if (m.t === 'seeking') { seeking = true; seekAt = Date.now(); paintSeek(); }
+    else if (m.t === 'idle') { seeking = false; paintSeek(); }
+    else if (m.t === 'match') { seeking = false; paintSeek(); openGame(m.game); }
+    else if (m.t === 'resume') openGame(m.game);
+    else if (m.t === 'err') { seeking = false; paintSeek(); const e = $('on-msg'); e.hidden = false; e.textContent = m.e === 'limit' ? `Has llegado al límite de ${m.limit} duelos gratis de hoy. Mañana tendrás más o pásate al plan ilimitado.` : 'No se pudo buscar rival. Inténtalo de nuevo.'; }
+  }
+  function paintStats(s: Stats) {
+    showLive(s, true);
+    const ul = $('on-players'); ul.innerHTML = ''; const others = (s.players || []);
+    others.forEach((p) => { const li = document.createElement('li'); if (p.n === profile?.n) li.className = 'me'; li.innerHTML = `<span>${esc(p.n)}${p.n === profile?.n ? ' (tú)' : ''} <span class="s">${p.s === 2 ? '· jugando' : p.s === 1 ? '· buscando' : ''}</span></span><span class="e">${p.e}</span>`; ul.appendChild(li); });
+    $('on-players-empty').hidden = others.length > 1;
+    const g = $('on-games'); g.innerHTML = ''; (s.games || []).forEach((x) => { const li = document.createElement('li'); li.innerHTML = `<span>${esc(x.w)} <span class="s">${x.we}</span> vs ${esc(x.b)} <span class="s">${x.be}</span></span><span class="s">${x.tc}</span>`; g.appendChild(li); });
+    $('on-games-empty').hidden = !!(s.games || []).length;
+    document.querySelectorAll<HTMLElement>('[data-tcn]').forEach((e) => { const n = s.searchTc?.[e.dataset.tcn!] || 0; e.textContent = n ? `${n} buscando` : ''; });
+    paintSeek();
+  }
+  function paintSeek() {
+    ($('on-seek') as HTMLElement).hidden = seeking; ($('on-cancel') as HTMLElement).hidden = !seeking;
+    document.querySelectorAll<HTMLButtonElement>('.on-tc').forEach((b) => (b.disabled = seeking));
+    const t = $('on-search-t'); clearInterval(tick);
+    if (!seeking) { t.textContent = ''; return; }
+    const upd = () => { const s = Math.floor((Date.now() - seekAt) / 1000); t.innerHTML = `Buscando rival… ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` + (s >= 25 ? ` · Hay poca gente ahora mismo. Mientras esperas puedes <a href="/jugar">jugar contra un bot</a> (esta búsqueda seguirá activa si no cambias de página).` : ''); };
+    upd(); tick = window.setInterval(upd, 1000);
+  }
+  document.querySelectorAll<HTMLButtonElement>('.on-tc').forEach((b) => b.addEventListener('click', () => { document.querySelectorAll('.on-tc').forEach((x) => x.setAttribute('aria-checked', 'false')); b.setAttribute('aria-checked', 'true'); tc = b.dataset.tc!; }));
+  $('on-seek').addEventListener('click', () => { $('on-msg').hidden = true; lobby?.send({ t: 'seek', tc }); });
+  $('on-cancel').addEventListener('click', () => lobby?.send({ t: 'cancel' }));
+  $('on-nick-f').addEventListener('submit', async (e) => {
+    e.preventDefault(); const v = ($('on-nick-i') as HTMLInputElement).value.trim(); if (!v) return;
+    const r = await getTicket(v); const er = $('on-nick-e');
+    if (r.ok && r.profile) { profile = r.profile; paintProfile(); er.hidden = true; ($('on-nick-i') as HTMLInputElement).value = ''; lobby?.close(); lobby = connectLobby(onLobby, () => {}); }
+    else { er.hidden = false; er.textContent = r.error === 'invalid_nick' ? 'Apodo no válido: usa de 3 a 16 letras, números, _ . - y no empieces por «admin» o «soporte».' : 'No se pudo cambiar el apodo.'; }
+  });
+
+  // ---------- Partida ----------
+  function openGame(id: string) {
+    if (gid === id) return; gid = id; gs = null; selected = null; pending = null; lastSeenMoves = 0;
+    $('on-lobby').hidden = true; $('on-game').hidden = false; $('on-end').hidden = true; $('on-offer').hidden = true; $('on-g-note').textContent = '';
+    gameConn?.close(); gameConn = connectGame(id, onGame, (up) => { if (!up && gs?.status === 'active') $('on-g-note').textContent = 'Conexión perdida. Reconectando… tu reloj sigue corriendo.'; });
+    const q = $('on-quick'); q.innerHTML = ''; quick.forEach((txt, k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-sm'; b.textContent = txt; b.addEventListener('click', () => gameConn?.send({ t: 'say', k })); q.appendChild(b); });
+    if (!quick.length) ['¡Buena suerte!', 'Buena partida', '¡Gracias!', 'Bien jugado', 'Tengo que irme', '¡Revancha!'].forEach((txt, k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-sm'; b.textContent = txt; b.addEventListener('click', () => gameConn?.send({ t: 'say', k })); q.appendChild(b); });
+  }
+  function onGame(m: any) {
+    if (m.t === 'fatal') { backToLobby(); return; }
+    if (m.t === 'say') { $('on-said').textContent = `${m.c === myColor ? 'Tú' : 'Rival'}: «${(quick[m.k] || '')}»`; return; }
+    if (m.t !== 'state') return;
+    const first = !gs; const prevMoves = gs ? gs.moves.length : 0; gs = m as GameState; recvAt = performance.now();
+    if (first) { myColor = (profile && gs.players.w.n === profile.n) ? 'w' : 'b'; flipped = myColor === 'b'; ($('on-g-tc') as HTMLElement).textContent = `Ritmo ${gs.tc.replace('+', ' + ')} · juegas con ${myColor === 'w' ? 'blancas' : 'negras'}`; }
+    if (gs.moves.length > prevMoves && !first && !m.err) { const l = gs.moves[gs.moves.length - 1]; (/x/.test(l) ? sfx.capture : sfx.move)(); if (/[+#]/.test(l)) sfx.check(); }
+    if (m.err === 'illegal') sfx.error();
+    paintGame(); if (gs.status === 'ended') finishGame();
+  }
+  const lastMove = () => gs?.last || null;
+  function paintGame() {
+    if (!gs) return; const g = new Chess(gs.fen); const last = lastMove(); const board = $('on-board'); board.innerHTML = '';
+    const legal = new Map<string, boolean>(); if (selected && gs.status === 'active' && gs.turn === myColor) g.moves({ square: selected as Square, verbose: true }).forEach((m) => legal.set(m.to, !!m.captured || m.flags.includes('e')));
+    let chk: string | null = null; if (g.inCheck()) for (const row of g.board()) for (const p of row) if (p && p.type === 'k' && p.color === g.turn()) chk = p.square;
+    const order: Square[] = []; for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) order.push((files[flipped ? 7 - f : f] + ((flipped ? r : 7 - r) + 1)) as Square);
+    order.forEach((sq, i) => {
+      const file = files.indexOf(sq[0]); const rank = Number(sq[1]) - 1; const dark = (file + rank) % 2 === 0; const piece = g.get(sq);
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.sq = sq;
+      b.className = 'sq' + (dark ? ' dark' : '') + (last && (last.from === sq || last.to === sq) ? ' last' : '') + (selected === sq ? ' sel' : '') + (chk === sq ? ' chk' : '') + (legal.has(sq) ? ' dot' + (legal.get(sq) ? ' cap' : '') : '');
+      b.setAttribute('aria-label', `${sq}${piece ? ', ' + { k: 'rey', q: 'dama', r: 'torre', b: 'alfil', n: 'caballo', p: 'peón' }[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro') : ', vacía'}`);
+      const tn = dark ? 'dk' : 'lt';
+      b.innerHTML = (piece ? pieceSvg(piece.color, piece.type) : '') + ((i % 8 === 7) ? `<span class="co r ${tn}" aria-hidden="true">${sq[1]}</span>` : '') + ((i >= 56) ? `<span class="co f ${tn}" aria-hidden="true">${sq[0]}</span>` : '');
+      board.appendChild(b);
+    });
+    const top = flipped ? 'w' : 'b'; const bot = flipped ? 'b' : 'w';
+    $('on-top-n').textContent = gs.players[top].n; $('on-top-e').textContent = String(gs.players[top].e); $('on-bot-n').textContent = gs.players[bot].n; $('on-bot-e').textContent = String(gs.players[bot].e);
+    ($('on-top-off') as HTMLElement).hidden = !(top !== myColor && gs.online[top] === false); // «desconectado» junto al rival
+    let out = ''; gs.moves.forEach((mv, i) => { out += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + es(mv) + ' '; }); const mv = $('on-moves'); mv.textContent = out.trim(); mv.scrollTop = mv.scrollHeight;
+    const act = gs.status === 'active'; const mine = act && gs.turn === myColor;
+    $('on-g-turn').textContent = act ? (mine ? 'Te toca mover' : `Mueve ${gs.players[gs.turn].n}`) : 'Partida terminada';
+    if (act && gs.online[myColor === 'w' ? 'b' : 'w'] === false) $('on-g-note').textContent = 'Tu rival se ha desconectado. Si no vuelve en 60 segundos, ganas.'; else if (act && $('on-g-note').textContent.startsWith('Tu rival se ha')) $('on-g-note').textContent = '';
+    ($('on-abort') as HTMLButtonElement).hidden = !(act && gs.moves.length < 2); ($('on-draw') as HTMLButtonElement).disabled = !act || gs.moves.length < 2 || gs.offer === myColor; ($('on-resign') as HTMLButtonElement).disabled = !act;
+    ($('on-offer') as HTMLElement).hidden = !(act && gs.offer && gs.offer !== myColor);
+    paintClocks();
+  }
+  function paintClocks() {
+    if (!gs) return; const c = liveClocks(gs, recvAt); const top = flipped ? 'w' : 'b'; const bot = flipped ? 'b' : 'w';
+    const set = (id: string, col: 'w' | 'b') => { $(id + '-c').textContent = fmtClock(c[col]); const p = $(id); p.classList.toggle('act', gs!.status === 'active' && gs!.turn === col); p.classList.toggle('low', c[col] < 10000 && gs!.status === 'active'); };
+    set('on-top', top); set('on-bot', bot);
+  }
+  setInterval(() => { if (gs && gs.status === 'active') paintClocks(); }, 200);
+
+  $('on-board').addEventListener('click', (e) => {
+    if (!gs || gs.status !== 'active' || gs.turn !== myColor || pending) return;
+    const t = (e.target as HTMLElement).closest<HTMLElement>('.sq'); if (!t) return; const sq = t.dataset.sq as Square; const g = new Chess(gs.fen);
+    if (selected && selected !== sq) {
+      const mv = g.moves({ square: selected as Square, verbose: true }).filter((m) => m.to === sq);
+      if (mv.length) { if (mv[0].promotion) { pending = { from: selected, to: sq }; openPromo(); return; } gameConn?.send({ t: 'move', from: selected, to: sq }); selected = null; paintGame(); return; }
+    }
+    const p = g.get(sq); selected = p && p.color === myColor && selected !== sq ? sq : null; paintGame();
+  });
+  function openPromo() {
+    const pr = $('on-promo'); pr.innerHTML = ''; pr.hidden = false;
+    (['q', 'r', 'b', 'n'] as const).forEach((k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.setAttribute('aria-label', { q: 'Dama', r: 'Torre', b: 'Alfil', n: 'Caballo' }[k]); b.innerHTML = pieceSvg(myColor, k); b.addEventListener('click', () => { if (pending) gameConn?.send({ t: 'move', from: pending.from, to: pending.to, promotion: k }); pending = null; selected = null; pr.hidden = true; paintGame(); }); pr.appendChild(b); });
+    (pr.querySelector('button') as HTMLElement)?.focus();
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('on-promo').hidden) { pending = null; $('on-promo').hidden = true; } });
+  $('on-resign').addEventListener('click', () => { if (confirm('¿Seguro que quieres rendirte? Perderás la partida y puntos de Elo.')) gameConn?.send({ t: 'resign' }); });
+  $('on-draw').addEventListener('click', () => { gameConn?.send({ t: 'draw' }); $('on-g-note').textContent = 'Has ofrecido tablas.'; });
+  $('on-abort').addEventListener('click', () => gameConn?.send({ t: 'abort' }));
+  $('on-offer-y').addEventListener('click', () => gameConn?.send({ t: 'draw' })); $('on-offer-n').addEventListener('click', () => gameConn?.send({ t: 'nodraw' }));
+  $('on-flip').addEventListener('click', () => { flipped = !flipped; paintGame(); });
+
+  async function finishGame() {
+    if (!gs) return; const r = gs.result; const you = myColor;
+    const won = r === you; const drew = r === 'd'; const x = r === 'x';
+    $('on-end').hidden = false; $('on-end-t').textContent = x ? 'Partida anulada' : drew ? 'Tablas' : won ? '¡Has ganado!' : 'Has perdido';
+    const d = gs.delta ? (you === 'w' ? gs.delta.w : gs.delta.b) : 0; const ne = gs.delta ? (you === 'w' ? gs.delta.we : gs.delta.be) : null;
+    $('on-end-d').textContent = (REASON[gs.reason || ''] ? REASON[gs.reason || ''][0].toUpperCase() + REASON[gs.reason || ''].slice(1) + '. ' : '') + (x ? 'No cuenta para el Elo.' : `Tu Elo: ${ne} (${d > 0 ? '+' : ''}${d}).`);
+    if (r !== 'x') { (won ? sfx.win : sfx.done)(); }
+    ($('on-g-turn') as HTMLElement).textContent = 'Partida terminada'; ($('on-offer') as HTMLElement).hidden = true;
+    const t = await getTicket(); if (t.ok && t.profile) { profile = t.profile; paintProfile(); paintHist(); }
+  }
+  $('on-again').addEventListener('click', () => backToLobby());
+  $('on-analyze').addEventListener('click', async () => { const r = await gamePgn(gid); if (r.ok && r.pgn) { try { sessionStorage.setItem('ngm-handoff', r.pgn); } catch {} location.href = '/analizador'; } else { $('on-report-m').textContent = 'La partida no se pudo cargar (las anuladas no se guardan).'; } });
+  $('on-report').addEventListener('click', async () => {
+    const why = prompt('¿Qué ha pasado? (por ejemplo: sospecho que usa un motor, insultos en el apodo…)'); if (!why) return;
+    const r = await report(gid, why); $('on-report-m').textContent = r.ok ? 'Gracias: hemos recibido la denuncia y la revisaremos.' : r.error === 'rate_limited' ? 'Has llegado al máximo de denuncias de hoy.' : 'No se pudo enviar la denuncia.';
+  });
+  function backToLobby() { gameConn?.close(); gameConn = null; gid = ''; gs = null; $('on-game').hidden = true; $('on-lobby').hidden = false; $('on-promo').hidden = true; lobby?.send({ t: 'stats' }); loadBoard(); }
+  function stopAll() { lobby?.close(); gameConn?.close(); clearInterval(tick); }
+  window.addEventListener('beforeunload', () => stopAll());
+  start();
+</script>

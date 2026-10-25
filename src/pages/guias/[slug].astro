@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import { GUIDES } from '../../data/guides';
+import { SITE_NAME, SITE_URL } from '../../config';
+export function getStaticPaths() { return GUIDES.map((g) => ({ params: { slug: g.slug }, props: { g } })); }
+const { g } = Astro.props;
+const others = GUIDES.filter((x) => x.slug !== g.slug).slice(0, 3);
+const jsonLd = [{ '@context': 'https://schema.org', '@type': 'Article', headline: g.title, description: g.description, inLanguage: 'es', mainEntityOfPage: `${SITE_URL}/guias/${g.slug}`, author: { '@type': 'Organization', name: SITE_NAME }, publisher: { '@type': 'Organization', name: SITE_NAME } }];
+---
+<Base title={g.title} description={g.description} crumbs={[{ name: 'Guías', href: '/guias' }, { name: g.title, href: `/guias/${g.slug}` }]} jsonLd={jsonLd}>
+  <div class="page-head narrow"><span class="eyebrow">Guía</span><h1>{g.title}</h1><p class="muted">{g.intro}</p></div>
+  <div class="narrow prose" style="padding-bottom:2rem">
+    {g.sections.map((s) => (
+      <Fragment>
+        <h2>{s.h}</h2>
+        {s.p?.map((t) => <p>{t}</p>)}
+        {s.ul && <ul>{s.ul.map((t) => <li>{t}</li>)}</ul>}
+      </Fragment>
+    ))}
+    <div class="notice"><strong>Ponlo en práctica.</strong> {g.cta.text} <a class="btn btn-primary btn-sm" style="margin-left:.4rem" href={g.cta.href}>{g.cta.label}</a></div>
+    <h2>Más guías</h2>
+    <ul>{others.map((o) => <li><a href={`/guias/${o.slug}`}>{o.title}</a></li>)}</ul>
+  </div>
+</Base>

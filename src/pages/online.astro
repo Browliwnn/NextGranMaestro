@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import Online from '../components/Online.astro';
+---
+<Base title="Jugar en línea contra otras personas" description="Duelos de ajedrez en línea con ranking Elo. Juega contra otras personas desde el navegador y, pronto, desde la app de iOS y Android: todos en la misma sala." crumbs={[{ name: 'Online', href: '/online' }]}>
+  <div class="page-head wrap">
+    <span class="eyebrow">Online</span>
+    <h1>Duelos en línea con ranking Elo</h1>
+    <p class="muted" style="max-width:68ch">Juega contra otras personas en tiempo real. Verás cuánta gente está conectada y jugando ahora mismo. Los puntos de Elo y el ranking son los de tu cuenta, así que valen igual desde el ordenador y, en el futuro, desde las apps de móvil.</p>
+  </div>
+  <div class="wrap" style="padding-bottom:3rem"><Online /></div>
+</Base>

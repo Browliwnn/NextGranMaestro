@@ -1,0 +1,75 @@
+// Guías de contenido (se publican en /guias). Para añadir una, copia un bloque y cambia el «slug».
+export interface Guide { slug: string; title: string; description: string; intro: string; sections: { h: string; p?: string[]; ul?: string[] }[]; cta: { text: string; href: string; label: string } }
+export const GUIDES: Guide[] = [
+  {
+    slug: 'como-analizar-tus-partidas',
+    title: 'Cómo analizar tus partidas de ajedrez paso a paso',
+    description: 'Un método sencillo para revisar tus partidas, encontrar tus errores y usar un motor como Stockfish sin depender de él.',
+    intro: 'Jugar mucho no basta para mejorar: lo que acelera el progreso es revisar tus partidas. Este método funciona igual con una partida de diez minutos que con una de torneo.',
+    sections: [
+      { h: '1. Revisa primero sin motor', p: ['Antes de abrir ningún programa, recorre la partida tú solo y anota los momentos en los que dudaste, te asustaste o cambió la evaluación «a ojo». Tu opinión sobre esos momentos es lo que realmente quieres comparar después con el motor.'] },
+      { h: '2. Busca los puntos críticos', p: ['No hace falta analizar todas las jugadas. Fíjate en:'], ul: ['El momento en que perdiste material o dejaste una pieza sin defender.', 'La jugada tras la cual la partida empezó a ir mal.', 'Las posiciones en las que tuviste una ventaja y no la convertiste.'] },
+      { h: '3. Pregunta al motor, pero entiende la respuesta', p: ['Carga la partida (puedes pegar el PGN en el analizador) y analiza solo esas posiciones críticas. Cuando el motor sugiera otra jugada, no la copies: pregunta por qué es mejor. ¿Evita una amenaza? ¿Gana una pieza? ¿Mejora una pieza mal colocada?', 'Mira la línea principal que propone, no solo la primera jugada: ahí está la explicación.'] },
+      { h: '4. Clasifica tus errores', p: ['Después de varias partidas verás patrones. Los más comunes son tácticos (no ver una amenaza), de apertura (mover sin plan), de final (no saber convertir) y de tiempo. Apunta cuál se repite más: ese es tu entrenamiento prioritario.'] },
+      { h: '5. Convierte el error en un hábito nuevo', p: ['Escribe una frase corta que te sirva en la próxima partida, por ejemplo: «antes de mover, miro qué amenaza mi rival». Una sola regla bien aplicada vale más que diez ideas olvidadas.'] },
+    ],
+    cta: { text: 'Pega el PGN de tu partida y recórrela jugada a jugada en el analizador.', href: '/analizador', label: 'Abrir el analizador' },
+  },
+  {
+    slug: 'principios-de-apertura',
+    title: 'Principios de apertura: qué hacer en las primeras jugadas',
+    description: 'Las ideas básicas de la apertura en ajedrez: controlar el centro, desarrollar las piezas y poner el rey a salvo, sin memorizar teoría.',
+    intro: 'No necesitas memorizar variantes para jugar una buena apertura. Con unos pocos principios llegarás a una posición cómoda y evitarás las trampas más típicas.',
+    sections: [
+      { h: 'Controla el centro', p: ['Las casillas e4, d4, e5 y d5 dan movilidad a tus piezas. Puedes ocuparlas con peones (1. e4, 1. d4) o controlarlas a distancia con piezas. Quien domina el centro suele tener más espacio para maniobrar.'] },
+      { h: 'Desarrolla tus piezas', p: ['Saca los caballos y los alfiles antes de empezar cualquier ataque. Normalmente los caballos van a f3 y c3 (o f6 y c6) y los alfiles a casillas activas desde donde miren al centro y al flanco de rey.'], ul: ['Mueve cada pieza una sola vez en la apertura, salvo que haya un motivo claro.', 'No saques la dama demasiado pronto: puede ser atacada y perderás tiempo retirándola.'] },
+      { h: 'Pon el rey a salvo', p: ['El enroque esconde al rey y activa la torre. Intenta enrocar en las primeras diez jugadas, sobre todo si el centro se abre.'] },
+      { h: 'Evita los peones innecesarios', p: ['Cada jugada de peón en la apertura es una jugada que no desarrolla una pieza. Mueve solo los peones que ayuden al centro o abran líneas a tus alfiles.'] },
+      { h: 'Una trampa que conviene conocer: el mate del pastor', p: ['Es un intento de mate rápido: 1. e4 e5 2. Ac4 Cc6 3. Dh5 y la amenaza es Dxf7#. Si el rival responde con 3… g6, la dama queda atacada y el ataque fracasa. Cuidado: 3… Cf6?? pierde por 4. Dxf7#.', 'La moraleja: antes de cada jugada, mira qué amenaza tu rival.'] },
+    ],
+    cta: { text: 'Prueba estas ideas jugando contra un bot de tu nivel, con pistas si te atascas.', href: '/jugar', label: 'Jugar contra bots' },
+  },
+  {
+    slug: 'tacticas-basicas',
+    title: 'Tácticas básicas de ajedrez: clavadas, horquillas y ataques dobles',
+    description: 'Aprende las tácticas que más partidas deciden: la clavada, la horquilla, el ataque doble y el ataque descubierto.',
+    intro: 'Una táctica es una secuencia de jugadas forzadas que gana material o da mate. Reconocer los patrones básicos es la forma más rápida de subir de nivel.',
+    sections: [
+      { h: 'La horquilla', p: ['Una sola pieza ataca a dos o más piezas rivales a la vez, y el rival solo puede salvar una. Los caballos son especialmente peligrosos porque nada puede bloquear su salto.'] },
+      { h: 'La clavada', p: ['Una pieza no puede (o no debe) moverse porque dejaría expuesta a otra de más valor que está detrás. Si la pieza clavada protege al rey, la clavada es absoluta y moverla es ilegal.', 'Para aprovecharla, ataca la pieza clavada con un peón u otra pieza: no puede escaparse.'] },
+      { h: 'El ataque doble', p: ['Es parecido a la horquilla, pero con dos amenazas distintas: por ejemplo, una pieza que da jaque y a la vez ataca otra pieza. El rival debe responder al jaque y pierde la otra.'] },
+      { h: 'El ataque descubierto', p: ['Al mover una pieza abres la línea de otra pieza que estaba detrás. Si la pieza que se mueve da jaque o ataca algo importante, creas dos amenazas con una sola jugada.'] },
+      { h: 'Cómo entrenar las tácticas', ul: ['Antes de cada jugada, busca las capturas, los jaques y las amenazas, tuyos y del rival.', 'Resuelve pocos problemas cada día: es mejor la constancia que una tarde entera.', 'Si no encuentras la solución, mira el motivo, no solo la jugada.'] },
+    ],
+    cta: { text: 'Entrena con ejercicios de «encuentra la mejor jugada», de fácil a difícil.', href: '/entrenamiento', label: 'Ir al entrenamiento' },
+  },
+  {
+    slug: 'errores-comunes-de-principiantes',
+    title: 'Los errores más comunes de los principiantes (y cómo evitarlos)',
+    description: 'Piezas sin defender, prisas, ataques sin plan: los fallos más habituales al empezar en ajedrez y un hábito sencillo para cada uno.',
+    intro: 'Casi todos los jugadores cometen los mismos errores al empezar. La buena noticia es que cada uno se arregla con un hábito pequeño.',
+    sections: [
+      { h: 'Dejar piezas sin defender', p: ['Antes de mover, repasa tus piezas: ¿cuáles no están protegidas por ninguna otra? Esas son las que el rival intentará atacar.'] },
+      { h: 'No mirar la amenaza del rival', p: ['Muchos jugadores piensan solo en su plan. Después de cada jugada de tu rival pregúntate: «¿qué quiere hacer con esa jugada?». Es el hábito que más partidas salva.'] },
+      { h: 'Jugar demasiado rápido', p: ['La prisa provoca piezas colgadas y mates en una jugada. Aunque la partida sea rápida, dedica unos segundos extra en los momentos con capturas o jaques.'] },
+      { h: 'Atacar sin desarrollar', p: ['Lanzar la dama y un alfil contra el rey rival sin el resto de las piezas casi nunca funciona. Desarrolla primero: un ataque necesita refuerzos.'] },
+      { h: 'Cambiar piezas sin motivo', p: ['Los cambios son útiles cuando mejoran tu posición, te dan ventaja material o simplifican una posición ganada. Si vas por detrás en material, conviene mantener las piezas.'] },
+      { h: 'No conocer los finales básicos', p: ['Saber dar mate con rey y dama contra rey, o con rey y torre contra rey, te evita convertir partidas ganadas en tablas. Es poca teoría con mucho retorno.'] },
+    ],
+    cta: { text: 'Juega contra un bot de nivel bajo y practica el hábito de comprobar amenazas.', href: '/jugar', label: 'Jugar contra bots' },
+  },
+  {
+    slug: 'como-leer-la-evaluacion-del-motor',
+    title: 'Cómo leer la evaluación de un motor de ajedrez (+1,5, −0,3, M3…)',
+    description: 'Qué significan los números de un motor como Stockfish, qué es la profundidad de análisis y por qué la mejor jugada puede cambiar.',
+    intro: 'Cuando un motor dice «+1,50» o «M3», está resumiendo la posición en un número. Entenderlo evita malas interpretaciones.',
+    sections: [
+      { h: 'La evaluación en peones', p: ['El número se mide en «peones»: +1,00 equivale, aproximadamente, a tener un peón de ventaja. Un signo positivo favorece a las blancas y uno negativo, a las negras.'], ul: ['Entre −0,3 y +0,3: posición igualada.', 'Alrededor de ±1: ventaja clara pero aún luchable.', 'Más de ±3: ventaja decisiva.'] },
+      { h: 'Los mates: «M3»', p: ['Si ves M3 significa que el motor ha encontrado un mate forzado en tres jugadas. Con un mate, la evaluación en peones deja de importar: gana el bando que da mate.'] },
+      { h: 'La profundidad', p: ['La profundidad es cuántas jugadas por delante calcula el motor. A más profundidad, más precisión, pero también más tiempo. Para repasar partidas suele bastar una profundidad media; las posiciones tácticas complicadas piden más.'] },
+      { h: 'Por qué cambia la mejor jugada', p: ['Al subir la profundidad, el motor puede descubrir una táctica que no veía antes y cambiar de opinión. Si dos jugadas tienen evaluaciones casi iguales, ambas son buenas: no te obsesiones con la «primera».'] },
+      { h: 'Un motor no explica por sí solo', p: ['Te dice qué jugada es mejor, no por qué. Úsalo para contrastar tu criterio, no para sustituirlo.'] },
+    ],
+    cta: { text: 'Analiza una posición y mira la evaluación y la línea principal.', href: '/analizador', label: 'Abrir el analizador' },
+  },
+];

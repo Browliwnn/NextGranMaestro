@@ -1,0 +1,110 @@
+---
+import Base from '../layouts/Base.astro';
+import { SUPPORT_URL } from '../config';
+---
+<Base title="Entrar o crear cuenta" description="Inicia sesión o crea una cuenta gratuita en NextGranMaestro para guardar tu progreso y comprar el plan ilimitado." noindex={true} crumbs={[{ name: 'Entrar', href: '/entrar' }]}>
+  <div class="page-head narrow">
+    <h1 id="h">Tu cuenta</h1>
+    <p class="muted">No necesitas cuenta para analizar, entrenar ni jugar. Con una cuenta gratuita guardas tu progreso entre dispositivos y puedes comprar el plan ilimitado y recuperarlo si cambias de móvil.</p>
+  </div>
+  <div class="narrow stack" style="padding-bottom:3rem">
+    <p class="notice" id="aviso" hidden><strong>Para comprar necesitas una cuenta.</strong> Así tu plan queda guardado y puedes recuperarlo en cualquier dispositivo. Entra o crea una cuenta gratis y vuelves a los precios.</p>
+
+    <section class="card" id="already" hidden>
+      <h2 class="h2s">Ya has iniciado sesión</h2>
+      <p class="muted" id="already-t"></p>
+      <div class="row"><a class="btn btn-primary btn-sm" href="/cuenta">Mi cuenta</a><a class="btn btn-sm" href="/precios">Precios</a></div>
+    </section>
+
+    <section class="card" id="auth">
+      <div class="seg" role="group" aria-label="Elige una opción">
+        <button type="button" id="tab-in" aria-pressed="true">Entrar</button>
+        <button type="button" id="tab-up" aria-pressed="false">Crear cuenta</button>
+      </div>
+
+      <form id="f-in" novalidate>
+        <label for="in-mail" class="lbl">Email</label>
+        <input id="in-mail" type="email" autocomplete="username" inputmode="email" required />
+        <label for="in-pw" class="lbl">Contraseña</label>
+        <input id="in-pw" type="password" autocomplete="current-password" required />
+        <div class="row"><button class="btn btn-primary" type="submit" id="go-in">Entrar</button></div>
+        <p class="small"><button type="button" class="link" id="to-forgot">¿Has olvidado tu contraseña?</button></p>
+      </form>
+
+      <form id="f-up" novalidate hidden>
+        <label for="up-mail" class="lbl">Email</label>
+        <input id="up-mail" type="email" autocomplete="email" inputmode="email" required />
+        <label for="up-pw" class="lbl">Contraseña <span class="muted">(mínimo 8 caracteres)</span></label>
+        <input id="up-pw" type="password" autocomplete="new-password" minlength="8" required />
+        <div class="row"><button class="btn btn-primary" type="submit" id="go-up">Crear cuenta</button></div>
+        <p class="small muted">Al crear la cuenta aceptas la <a href="/privacidad">política de privacidad</a> y las <a href="/condiciones">condiciones</a>. Guardamos tu email, tu contraseña cifrada y tu progreso.</p>
+      </form>
+
+      <form id="f-forgot" novalidate hidden>
+        <p class="muted">Escribe tu email y te enviaremos un enlace para elegir una contraseña nueva.</p>
+        <label for="fg-mail" class="lbl">Email</label>
+        <input id="fg-mail" type="email" autocomplete="email" inputmode="email" required />
+        <div class="row"><button class="btn btn-primary" type="submit">Enviar enlace</button><button class="btn" type="button" id="back-in">Volver</button></div>
+      </form>
+
+      <form id="f-reset" novalidate hidden>
+        <h2 class="h2s">Elige una contraseña nueva</h2>
+        <label for="rs-pw" class="lbl">Contraseña nueva <span class="muted">(mínimo 8 caracteres)</span></label>
+        <input id="rs-pw" type="password" autocomplete="new-password" minlength="8" required />
+        <div class="row"><button class="btn btn-primary" type="submit">Guardar contraseña</button></div>
+      </form>
+
+      <p class="err" id="err" role="alert" hidden></p>
+      <p class="ok" id="ok" role="status" hidden></p>
+    </section>
+    <p class="muted small">¿Problemas para entrar? <a href={SUPPORT_URL} rel="noopener noreferrer" target="_blank">Escríbenos en el soporte de Discord</a>.</p>
+  </div>
+</Base>
+<style>
+  .h2s{font-size:1.3rem;margin-top:0}
+  .stack{display:grid;gap:1.2rem}
+  .lbl{display:block;font-weight:600;font-size:.9rem;margin:1rem 0 .4rem}
+  input[type=email],input[type=password]{width:100%;min-height:46px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;font:inherit}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+  .small{font-size:.88rem;margin:.9rem 0 0}
+  .seg{display:flex;gap:.4rem;margin-bottom:.4rem}
+  .seg button{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:600 .95rem var(--font);cursor:pointer}
+  .seg button[aria-pressed="true"]{border-color:var(--gold);background:rgba(214,176,92,.18);color:#ffe6a8}
+  .link{background:none;border:0;padding:0;color:var(--gold);text-decoration:underline;font:inherit;cursor:pointer;min-height:44px}
+  .err{color:#ffb3b3;margin-top:1rem}.ok{color:#9be6a8;margin-top:1rem}
+</style>
+<script>
+  import { cachedUser, me, login, register, forgot, resetPassword, afterAuth, safeNext, verifyEmail } from '../utils/account';
+  const $ = (id: string) => document.getElementById(id)!;
+  const q = new URLSearchParams(location.search);
+  const next = safeNext(q.get('next'));
+  const forms = ['f-in', 'f-up', 'f-forgot', 'f-reset'];
+  const show = (id: string) => { forms.forEach((f) => ($(f).hidden = f !== id)); $('err').hidden = true; $('ok').hidden = true; $('tab-in').setAttribute('aria-pressed', String(id === 'f-in')); $('tab-up').setAttribute('aria-pressed', String(id === 'f-up')); };
+  const err = (m: string) => { $('ok').hidden = true; $('err').textContent = m; $('err').hidden = false; };
+  const ok = (m: string) => { $('err').hidden = true; $('ok').textContent = m; $('ok').hidden = false; };
+  const ERR: Record<string, string> = {
+    invalid_email: 'Escribe un email válido.', weak_password: 'La contraseña debe tener entre 8 y 128 caracteres.', exists: 'Ya hay una cuenta con ese email. Prueba a entrar.',
+    bad_credentials: 'Email o contraseña incorrectos.', rate_limited: 'Demasiados intentos. Prueba de nuevo más tarde.', accounts_unavailable: 'Las cuentas no están disponibles ahora mismo. Inténtalo en unos minutos.',
+    invalid_token: 'El enlace no es válido o ha caducado. Pide uno nuevo.', mail_not_configured: 'El envío de correos aún no está activo. Escríbenos desde el soporte y te ayudamos.', network: 'No hay conexión con el servidor. Inténtalo de nuevo.',
+  };
+  const msg = (r: { error?: string; wait?: number }) => r.error === 'locked' ? `Demasiados intentos fallidos. Espera unos ${Math.max(1, Math.ceil((r.wait || 900) / 60))} minutos.` : ERR[r.error || ''] || 'No se pudo completar. Inténtalo de nuevo.';
+  async function finish() {
+    ok('Un momento…');
+    const r = await afterAuth();
+    const note = r.plan === 'restored' ? ' Tu plan ilimitado está activo en este dispositivo.' : r.plan === 'linked' ? ' Hemos guardado tu plan en tu cuenta.' : '';
+    if (r.plan === 'wait') { ok(`Has entrado. Tu plan está activo en otro dispositivo; podrás pasarlo aquí dentro de unas ${r.waitHours} horas.`); setTimeout(() => (location.href = next), 3500); return; }
+    ok('Has entrado.' + note); setTimeout(() => (location.href = next), note ? 1800 : 400);
+  }
+  $('tab-in').addEventListener('click', () => show('f-in')); $('tab-up').addEventListener('click', () => show('f-up'));
+  $('to-forgot').addEventListener('click', () => show('f-forgot')); $('back-in').addEventListener('click', () => show('f-in'));
+  const val = (id: string) => ($(id) as HTMLInputElement).value;
+  $('f-in').addEventListener('submit', async (e) => { e.preventDefault(); const b = $('go-in') as HTMLButtonElement; b.disabled = true; const r = await login(val('in-mail'), val('in-pw')); b.disabled = false; r.ok ? finish() : err(msg(r)); });
+  $('f-up').addEventListener('submit', async (e) => { e.preventDefault(); const b = $('go-up') as HTMLButtonElement; b.disabled = true; const r = await register(val('up-mail'), val('up-pw')); b.disabled = false; r.ok ? finish() : err(msg(r)); });
+  $('f-forgot').addEventListener('submit', async (e) => { e.preventDefault(); const r = await forgot(val('fg-mail')); r.ok ? ok('Si hay una cuenta con ese email, te hemos enviado un enlace para cambiar la contraseña. Mira también el correo no deseado.') : err(msg(r)); });
+  $('f-reset').addEventListener('submit', async (e) => { e.preventDefault(); const r = await resetPassword(q.get('reset') || '', val('rs-pw')); if (r.ok) { show('f-in'); ok('Contraseña cambiada. Ya puedes entrar con la nueva.'); history.replaceState(null, '', '/entrar'); } else err(msg(r)); });
+  if (q.get('verify')) { verifyEmail(q.get('verify') || '').then((r) => { history.replaceState(null, '', '/entrar'); r.ok ? ok('Email confirmado. ¡Gracias!') : err(msg(r)); }); }
+  if (q.get('aviso') === 'pago') $('aviso').hidden = false;
+  if (q.get('reset')) { show('f-reset'); $('h').textContent = 'Nueva contraseña'; }
+  else if (q.get('crear') === '1') show('f-up');
+  (async () => { if (q.get('reset') || q.get('verify')) return; const u = cachedUser() ? await me() : null; if (u) { $('auth').hidden = true; $('already').hidden = false; $('already-t').textContent = `Sesión iniciada como ${u.email}.`; } })();
+</script>

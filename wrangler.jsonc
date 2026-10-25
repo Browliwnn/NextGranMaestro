@@ -1,0 +1,23 @@
+{
+  "name": "nextgranmaestro",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-17",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "ratelimits": [
+    { "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 30, "period": 60 } }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "DEVICES", "class_name": "DeviceRegistry" }, { "name": "ACCOUNTS", "class_name": "AccountStore" }, { "name": "LOBBY", "class_name": "Lobby" }, { "name": "GAMES", "class_name": "GameRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DeviceRegistry"] }, { "tag": "v2", "new_sqlite_classes": ["AccountStore"] }, { "tag": "v3", "new_sqlite_classes": ["Lobby", "GameRoom"] }],
+  "observability": {
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+    "traces": { "enabled": false, "head_sampling_rate": 1, "persist": true },
+    "issue_detection": { "enabled": false }
+  }
+}

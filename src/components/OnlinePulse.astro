@@ -1,0 +1,22 @@
+---
+---
+<p class="pulse" id="pulse" hidden role="status" aria-live="polite"><span class="pdot" aria-hidden="true"></span><span id="pulse-t"></span></p>
+<style is:global>
+  .pulse{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem .85rem;border:1px solid var(--line);border-radius:99px;font-weight:600;font-size:.92rem;margin:.6rem 0}
+  .pulse .pdot{width:.55rem;height:.55rem;border-radius:50%;background:#3ddc97}
+  .pulse.zero .pdot{background:#888}
+  [hidden].pulse{display:none}
+</style>
+<script>
+  // Cuánta gente hay jugando ahora (público, sin apodos). Si el servidor no responde, el aviso simplemente no se muestra.
+  const el = document.getElementById('pulse'); const t = document.getElementById('pulse-t');
+  async function tick() {
+    try {
+      const r = await fetch('/api/online/stats'); if (!r.ok) return; const s = await r.json();
+      if (!el || !t) return; el.hidden = false; el.classList.toggle('zero', s.online === 0);
+      t.textContent = s.online === 0 ? 'Ahora mismo no hay nadie conectado a los duelos en línea' : `${s.online} ${s.online === 1 ? 'persona conectada' : 'personas conectadas'} · ${s.playing} jugando · ${s.searching} buscando rival`;
+    } catch {}
+  }
+  tick(); const iv = setInterval(() => { if (document.visibilityState === 'visible') tick(); }, 20000);
+  window.addEventListener('pagehide', () => clearInterval(iv));
+</script>

@@ -1,0 +1,478 @@
+---
+import '../styles/board.css';
+import { defsSvg } from '../utils/pieces';
+import { BOT_HINTS } from '../config';
+import { BOTS } from '../data/bots';
+const free = BOTS.filter((b) => !b.premium);
+const prem = BOTS.filter((b) => b.premium);
+---
+<Fragment set:html={defsSvg} />
+<div class="bt" data-hints={BOT_HINTS}>
+  <div class="bt-board-col">
+    <div class="tr-stage">
+      <div class="frame">
+        <div class="board-wrap">
+          <div id="board" class="board" role="group" aria-label="Tablero de la partida"></div>
+          <svg id="arrows" class="arrows" viewBox="0 0 800 800" aria-hidden="true"></svg>
+          <div class="promo" id="promo" role="dialog" aria-modal="true" aria-label="Elige la pieza para coronar el peón" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div class="tr-tools" role="group" aria-label="Controles del tablero">
+      <button class="btn btn-sm" id="flip" type="button">⇅ Girar tablero</button>
+      <button class="btn btn-sm" id="sound" type="button" aria-pressed="true">🔊 Sonido</button>
+    </div>
+  </div>
+
+  <div class="bt-panel">
+    <div class="card" id="setup">
+      <h2 class="h-sm">Elige a tu rival</h2>
+      <p class="muted small">El nivel (Elo) es aproximado. Tendrás {BOT_HINTS} pistas por partida. Cuando le ganes a un bot quedará marcado como superado para siempre, y podrás volver a jugar contra él cuando quieras.</p>
+      <p class="small" id="beaten-count" aria-live="polite"></p>
+      <h3 class="bt-group">Gratis</h3>
+      <div class="bots" role="radiogroup" aria-label="Bots gratuitos">
+        {free.map((b) => (
+          <button type="button" class="bot" role="radio" aria-checked="false" data-bot={b.id}>
+            <span class="bn">{b.name}</span><span class="be">{b.elo}</span><span class="bd">{b.desc}</span><span class="bb" data-badge={b.id}>Sin superar</span><span class="bs" data-stat={b.id}></span>
+          </button>
+        ))}
+      </div>
+      <h3 class="bt-group">Plan ilimitado <span class="crown" aria-hidden="true">♛</span></h3>
+      <div class="bots" role="radiogroup" aria-label="Bots del plan ilimitado">
+        {prem.map((b) => (
+          <button type="button" class="bot is-prem" role="radio" aria-checked="false" data-bot={b.id}>
+            <span class="bn">{b.name}<span class="lock" data-free-only aria-hidden="true"> 🔒</span></span><span class="be">{b.elo}</span><span class="bd">{b.desc}</span><span class="bb" data-badge={b.id}>Sin superar</span><span class="bs" data-stat={b.id}></span>
+          </button>
+        ))}
+      </div>
+      <fieldset class="colors">
+        <legend>Juegas con</legend>
+        <div class="seg" role="radiogroup" aria-label="Color de tus piezas">
+          <button type="button" role="radio" aria-checked="true" data-color="w">Blancas</button>
+          <button type="button" role="radio" aria-checked="false" data-color="b">Negras</button>
+          <button type="button" role="radio" aria-checked="false" data-color="r">Al azar</button>
+        </div>
+      </fieldset>
+      <button class="btn btn-primary" id="start" type="button">Empezar partida</button>
+      <p class="small" id="setup-msg" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="card" id="game" hidden>
+      <p class="eyebrow" id="g-elo">Rival</p>
+      <h2 class="h-sm" id="g-name">—</h2>
+      <p class="turn" id="g-turn" aria-live="polite"></p>
+      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+      <div class="tr-tools bt-act" role="group" aria-label="Acciones de la partida">
+        <button class="btn btn-sm" id="hint" type="button">💡 <span id="hleft">Pista (3)</span></button>
+        <button class="btn btn-sm" id="undo" type="button">↶ Deshacer (<span id="uleft">3</span>)</button>
+        <button class="btn btn-sm" id="resign" type="button">🏳 Rendirme</button>
+        <button class="btn btn-sm" id="newg" type="button">Nueva partida</button>
+      </div>
+      <p class="moves bt-moves" id="moves" aria-label="Jugadas de la partida"></p>
+      <div class="tr-tools bt-act" role="group" aria-label="Guardar o analizar la partida">
+        <button class="btn btn-sm" id="pgn-dl" type="button" disabled>⬇ Descargar PGN</button>
+        <button class="btn btn-sm" id="to-az" type="button" disabled>🔍 Analizar esta partida</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  .tr-stage{width:min(100%,690px);margin-inline:auto}
+  @media (min-width:1700px){.tr-stage{width:min(100%,780px)}}
+  @media (max-height:520px) and (orientation:landscape){.tr-stage{width:min(100%,calc(100dvh - 90px))}}
+  .tr-tools{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;justify-content:center}
+  .bt .moves{margin:.5rem 0 0}
+  .bt{display:grid;gap:1.5rem;align-items:start}
+  @media (min-width:960px){.bt{grid-template-columns:minmax(0,1fr) 430px}}
+  @media (min-width:1700px){.bt{grid-template-columns:minmax(0,1fr) 480px}}
+  .bt .h-sm{font-size:1.3rem;margin:.1rem 0 .3rem}
+  .bt .small{font-size:.9rem;margin:.4rem 0}
+  .bt .turn{margin:0 0 .6rem;color:var(--muted)}
+  .bt-group{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:1.1rem 0 .5rem}
+  .bt-group .crown{font-size:1rem}
+  .bots{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem}
+  .bot{display:grid;align-content:start;grid-template-columns:1fr auto;gap:.15rem .5rem;text-align:left;padding:.7rem .8rem;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;cursor:pointer;min-height:44px}
+  .bot:hover{border-color:var(--gold)}
+  .bot[aria-checked="true"]{border-color:var(--gold);background:rgba(214,176,92,.14);box-shadow:0 0 0 1px var(--gold)}
+  .bot .bn{font-weight:700}
+  .bot .be{font:700 .9rem ui-monospace,Menlo,Consolas,monospace;color:var(--gold)}
+  .bot .bd{grid-column:1/-1;font-size:.82rem;color:var(--muted);line-height:1.35}
+  .bot .bb{grid-column:1/-1;justify-self:start;font-size:.75rem;font-weight:700;padding:.1rem .5rem;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+  .bot .bb.yes{color:#7be3a6;border-color:rgba(61,220,151,.55);background:rgba(61,220,151,.12)}
+  .bot .bs{grid-column:1/-1;font-size:.78rem;color:#7be3a6}
+  .bot .bs:empty{display:none}
+  .colors{border:0;padding:0;margin:1.2rem 0 1rem}
+  .colors legend{font-weight:600;margin-bottom:.5rem;padding:0}
+  .seg{display:flex;gap:.4rem;flex-wrap:wrap}
+  .seg button{flex:1;min-width:90px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:600 .95rem var(--font);cursor:pointer}
+  .seg button[aria-checked="true"]{border-color:var(--gold);background:rgba(214,176,92,.18);color:#ffe6a8}
+  .bt-act{justify-content:flex-start;margin:.8rem 0}
+  .bt-moves{max-height:11rem;overflow:auto;margin:.6rem 0 0;padding:.6rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:500 .9rem/1.7 ui-monospace,Menlo,Consolas,monospace;color:var(--muted)}
+  .bt-moves:empty{display:none}
+  .bt .feedback{min-height:1.5em}
+  .bt .feedback.ok{color:#7be3a6}.bt .feedback.bad{color:#ffb3b3}
+  html[data-prem] .bot .lock{display:none}
+  .bt .btn[disabled]{opacity:.5;cursor:not-allowed}
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+  import type { Square } from 'chess.js';
+  import { BOTS, botById, type Bot } from '../data/bots';
+  import { pieceSvg } from '../utils/pieces';
+  import { arrowSvg } from '../utils/arrows';
+  import { isPremium, refreshPremium } from '../utils/premium';
+  import { syncNow, queueSync } from '../utils/account';
+  import { sfx, sound } from '../utils/sfx';
+
+  const root = document.querySelector<HTMLElement>('.bt')!;
+  const HINTS = Number(root.dataset.hints || 3); const UNDOS = 3; const SAVE = 'ngm-botgame';
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const boardEl = $('board'); const arrowsEl = document.getElementById('arrows') as unknown as SVGSVGElement;
+  const files = 'abcdefgh';
+  const pieceName: Record<string, string> = { k: 'rey', q: 'dama', r: 'torre', b: 'alfil', n: 'caballo', p: 'peón' };
+  const ES: Record<string, string> = { N: 'C', B: 'A', R: 'T', Q: 'D', K: 'R' };
+  const es = (san: string) => san.replace(/^[NBRQK]/, (m) => ES[m]).replace(/=([NBRQ])/, (_, p) => '=' + ES[p]);
+
+  // ---------- Motor ----------
+  let worker: Worker | null = null; let ready: Promise<void> | null = null;
+  function startEngine(): Promise<void> {
+    if (ready) return ready;
+    ready = new Promise((resolve, reject) => {
+      try { worker = new Worker('/engine/stockfish-19-lite-single.js'); } catch (e) { reject(e); return; }
+      const to = setTimeout(() => reject(new Error('timeout')), 25000);
+      worker.onerror = () => { clearTimeout(to); reject(new Error('worker')); };
+      worker.onmessage = (ev) => { if (String(ev.data).includes('readyok')) { clearTimeout(to); worker!.onmessage = null; resolve(); } };
+      worker.postMessage('uci'); worker.postMessage('isready');
+    });
+    ready.catch(() => { ready = null; worker = null; });
+    return ready;
+  }
+  type Line = { cp: number | null; mate: number | null; d: number; pv: string[] };
+  type Search = { opts: string[]; go: string; fen: string };
+  let chain: Promise<unknown> = Promise.resolve(); let searching = false;
+  /** Ejecuta una búsqueda a la vez. Devuelve las líneas y la mejor jugada. */
+  function search(s: Search): Promise<{ lines: Line[]; best: string }> {
+    const job = () => new Promise<{ lines: Line[]; best: string }>((resolve, reject) => {
+      const lines = new Map<number, Line>(); searching = true;
+      const to = setTimeout(() => worker!.postMessage('stop'), 20000);
+      worker!.onmessage = (ev) => {
+        const t = String(ev.data);
+        if (t.startsWith('info') && t.includes(' pv ') && !t.includes('lowerbound') && !t.includes('upperbound')) {
+          const d = /depth (\d+)/.exec(t); const cp = /score cp (-?\d+)/.exec(t); const mt = /score mate (-?\d+)/.exec(t);
+          const pv = /\spv (.+)$/.exec(t); const k = /multipv (\d+)/.exec(t);
+          if (d && pv) lines.set(k ? +k[1] : 1, { d: +d[1], cp: cp ? +cp[1] : null, mate: mt ? +mt[1] : null, pv: pv[1].trim().split(' ') });
+        } else if (t.startsWith('bestmove')) {
+          clearTimeout(to); searching = false;
+          resolve({ lines: [...lines.keys()].sort((a, b) => a - b).map((k) => lines.get(k)!), best: t.split(' ')[1] });
+        }
+      };
+      worker!.onerror = () => { clearTimeout(to); searching = false; reject(new Error('worker')); };
+      s.opts.forEach((o) => worker!.postMessage('setoption name ' + o));
+      worker!.postMessage('position fen ' + s.fen); worker!.postMessage('go ' + s.go);
+    });
+    const p = chain.then(job, job); chain = p.catch(() => {}); return p;
+  }
+  const stopSearch = () => { if (searching && worker) worker.postMessage('stop'); };
+  const score = (l: Line) => (l.mate !== null ? (l.mate > 0 ? 100000 - l.mate : -100000 - l.mate) : l.cp ?? 0);
+
+  // ---------- Elegir la jugada del bot ----------
+  async function botMove(bot: Bot, fen: string, ply: number, botWhite: boolean): Promise<string | null> {
+    await startEngine();
+    const g = new Chess(fen); const legal = g.moves({ verbose: true });
+    if (!legal.length) return null;
+    const uci = (m: { from: string; to: string; promotion?: string }) => m.from + m.to + (m.promotion || '');
+    if (bot.kind !== 'rand' && botWhite && ply === 0) { const o = ['e2e4', 'd2d4', 'g1f3', 'c2c4']; return o[Math.floor(Math.random() * o.length)]; }
+    if (bot.kind === 'rand') {
+      const r = await search({ fen, opts: ['UCI_LimitStrength value false', 'MultiPV value ' + bot.pool], go: 'depth ' + bot.depth });
+      const lines = r.lines.filter((l) => l.pv[0]);
+      if (!lines.length) return r.best;
+      if (lines[0].mate === 1 && Math.random() > (bot.blunder || 0) * 0.5) return lines[0].pv[0];
+      if (Math.random() < (bot.blunder || 0)) return uci(legal[Math.floor(Math.random() * legal.length)]);
+      const top = score(lines[0]); const T = bot.temp || 150;
+      const w = lines.map((l) => Math.exp(-Math.max(0, top - score(l)) / T));
+      let x = Math.random() * w.reduce((a, b) => a + b, 0);
+      for (let i = 0; i < lines.length; i++) { x -= w[i]; if (x <= 0) return lines[i].pv[0]; }
+      return lines[0].pv[0];
+    }
+    const opts = bot.kind === 'max' ? ['UCI_LimitStrength value false', 'MultiPV value 1'] : ['UCI_LimitStrength value true', 'UCI_Elo value ' + Math.min(3190, Math.max(1320, bot.elo)), 'MultiPV value 1'];
+    const r = await search({ fen, opts, go: 'movetime ' + (bot.ms || 500) });
+    return r.best && r.best !== '(none)' ? r.best : uci(legal[0]);
+  }
+  async function hintMove(fen: string): Promise<string | null> {
+    await startEngine();
+    const r = await search({ fen, opts: ['UCI_LimitStrength value false', 'MultiPV value 1'], go: 'depth 14' });
+    return r.best && r.best !== '(none)' ? r.best : null;
+  }
+
+  // ---------- Estado ----------
+  let bot: Bot = BOTS[0]; let myColor: 'w' | 'b' = 'w'; let pickColor: 'w' | 'b' | 'r' = 'w';
+  let game = new Chess(); let flipped = false; let playing = false; let thinking = false; let gid = 0;
+  let selected: Square | null = null; let last: { from: string; to: string } | null = null;
+  let hintArrow: { from: string; to: string } | null = null; let hintsLeft = HINTS; let undosLeft = UNDOS; let picked = false; let resultTag = '*';
+  let timers: number[] = [];
+  const later = (fn: () => void, ms: number) => { timers.push(window.setTimeout(fn, ms)); };
+  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+  function squares(): Square[] {
+    const out: Square[] = [];
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const file = flipped ? 7 - f : f; const rank = flipped ? r : 7 - r;
+      out.push((files[file] + (rank + 1)) as Square);
+    }
+    return out;
+  }
+  function kingSquare(color: 'w' | 'b'): string | null {
+    for (const row of game.board()) for (const p of row) if (p && p.type === 'k' && p.color === color) return p.square;
+    return null;
+  }
+  function render(popSq?: string) {
+    const legal = new Map<string, boolean>();
+    if (selected && playing) game.moves({ square: selected, verbose: true }).forEach((m) => legal.set(m.to, !!m.captured || m.flags.includes('e')));
+    const chkSq = game.inCheck() ? kingSquare(game.turn()) : null;
+    boardEl.innerHTML = '';
+    squares().forEach((sq, i) => {
+      const file = files.indexOf(sq[0]); const rank = Number(sq[1]) - 1;
+      const dark = (file + rank) % 2 === 0; const piece = game.get(sq);
+      const b = document.createElement('button'); b.type = 'button'; b.dataset.sq = sq;
+      let cls = 'sq' + (dark ? ' dark' : '');
+      if (last && (last.from === sq || last.to === sq)) cls += ' last';
+      if (selected === sq) cls += ' sel';
+      if (chkSq === sq) cls += ' chk';
+      if (legal.has(sq)) cls += ' dot' + (legal.get(sq) ? ' cap' : '');
+      if (popSq === sq) cls += ' pop';
+      b.className = cls;
+      b.setAttribute('aria-label', `${sq}${piece ? ', ' + pieceName[piece.type] + (piece.color === 'w' ? ' blanco' : ' negro') : ', vacía'}`);
+      const tn = dark ? 'dk' : 'lt';
+      b.innerHTML = (piece ? pieceSvg(piece.color, piece.type) : '') +
+        ((i % 8 === 7) ? `<span class="co r ${tn}" aria-hidden="true">${sq[1]}</span>` : '') +
+        ((i >= 56) ? `<span class="co f ${tn}" aria-hidden="true">${sq[0]}</span>` : '');
+      boardEl.appendChild(b);
+    });
+    arrowsEl.innerHTML = hintArrow ? arrowSvg(hintArrow.from, hintArrow.to, '#3ddc97', 18, 0.95, flipped) : '';
+  }
+  function say(msg: string, cls: '' | 'ok' | 'bad' = '') { const f = $('feedback'); f.textContent = msg; f.className = 'feedback ' + cls; }
+  function paintMoves() {
+    const h = game.history(); let out = '';
+    h.forEach((m, i) => { out += (i % 2 === 0 ? `${i / 2 + 1}. ` : '') + es(m) + ' '; });
+    const el = $('moves'); el.textContent = out.trim(); el.scrollTop = el.scrollHeight;
+  }
+  function paintTools() {
+    const h = game.history().length;
+    ($('undo') as HTMLButtonElement).disabled = !playing || thinking || game.turn() !== myColor || undosLeft <= 0 || h - 2 < (myColor === 'b' ? 1 : 0);
+    $('uleft').textContent = String(undosLeft);
+    ($('pgn-dl') as HTMLButtonElement).disabled = h < 1; ($('to-az') as HTMLButtonElement).disabled = h < 1;
+  }
+  function paintTurn() {
+    paintTools();
+    const t = $('g-turn');
+    if (!playing) return;
+    t.textContent = thinking ? `${bot.name} está pensando…` : game.turn() === myColor ? 'Te toca mover.' : `Mueve ${bot.name}.`;
+    ($('hint') as HTMLButtonElement).disabled = !playing || thinking || game.turn() !== myColor || hintsLeft <= 0;
+    $('hleft').textContent = `Pista (${hintsLeft})`;
+
+  }
+
+  // ---------- Estadísticas ----------
+  type Rec = Record<string, { w: number; d: number; l: number }>;
+  const loadStats = (): Rec => { try { return JSON.parse(localStorage.getItem('ngm-bots') || '{}') || {}; } catch { return {}; } };
+  function addStat(id: string, r: 'w' | 'd' | 'l') { const s = loadStats(); const x = s[id] || { w: 0, d: 0, l: 0 }; x[r]++; s[id] = x; try { localStorage.setItem('ngm-bots', JSON.stringify(s)); } catch {} queueSync(); paintStats(); }
+  const beaten = (id: string) => (loadStats()[id]?.w || 0) > 0;
+  function paintStats() {
+    const s = loadStats();
+    document.querySelectorAll<HTMLElement>('[data-stat]').forEach((e) => { const x = s[e.dataset.stat!]; e.textContent = x ? `Tu marca: ${x.w} ${x.w === 1 ? 'ganada' : 'ganadas'} · ${x.d} ${x.d === 1 ? 'tabla' : 'tablas'} · ${x.l} ${x.l === 1 ? 'perdida' : 'perdidas'}` : ''; });
+    let n = 0;
+    document.querySelectorAll<HTMLElement>('[data-badge]').forEach((e) => { const ok = (s[e.dataset.badge!]?.w || 0) > 0; if (ok) n++; e.textContent = ok ? '✓ Superado' : 'Sin superar'; e.classList.toggle('yes', ok); });
+    $('beaten-count').innerHTML = `Bots superados: <strong>${n}</strong> de ${BOTS.length}` + (n === BOTS.length ? ' 🏆' : '');
+  }
+
+  // ---------- Guardar la partida en curso (sobrevive a recargar la página) ----------
+  function saveGame() {
+    try {
+      if (!playing) { localStorage.removeItem(SAVE); return; }
+      localStorage.setItem(SAVE, JSON.stringify({ bot: bot.id, color: myColor, moves: game.history(), hints: hintsLeft, undos: undosLeft }));
+    } catch {}
+  }
+  function buildPgn(): string {
+    const g = new Chess(); game.history().forEach((m) => g.move(m));
+    const white = myColor === 'w' ? 'Tú' : `${bot.name} (bot ~${bot.elo})`; const black = myColor === 'b' ? 'Tú' : `${bot.name} (bot ~${bot.elo})`;
+    g.setHeader('Event', 'Partida contra bot · NextGranMaestro'); g.setHeader('Date', new Date().toISOString().slice(0, 10).replace(/-/g, '.'));
+    g.setHeader('White', white); g.setHeader('Black', black); g.setHeader('Result', resultTag);
+    return g.pgn();
+  }
+  function restoreGame(): boolean {
+    try {
+      const raw = localStorage.getItem(SAVE); if (!raw) return false;
+      const d = JSON.parse(raw); const b = botById(d.bot);
+      if (!b || (d.color !== 'w' && d.color !== 'b') || !Array.isArray(d.moves) || d.moves.length > 600) { localStorage.removeItem(SAVE); return false; }
+      if (b.premium && !isPremium()) return false; // se conserva por si vuelve a tener el plan
+      const g = new Chess(); for (const m of d.moves) g.move(m);
+      if (g.isGameOver()) { localStorage.removeItem(SAVE); return false; }
+      bot = b; picked = true; myColor = d.color; game = g; flipped = myColor === 'b'; last = null;
+      const h = g.history({ verbose: true }); const l = h[h.length - 1]; if (l) last = { from: l.from, to: l.to };
+      hintsLeft = Math.max(0, Math.min(HINTS, Number(d.hints) || 0)); undosLeft = Math.max(0, Math.min(UNDOS, Number(d.undos) || 0));
+      playing = true; thinking = false; resultTag = '*'; gid++;
+      document.querySelectorAll('.bot').forEach((x) => x.setAttribute('aria-checked', String(x.getAttribute('data-bot') === b.id)));
+      $('setup').hidden = true; $('game').hidden = false;
+      $('g-name').textContent = bot.name; $('g-elo').textContent = `Elo aprox. ${bot.elo} · ${beaten(bot.id) ? '✓ superado' : 'sin superar'} · juegas con ${myColor === 'w' ? 'blancas' : 'negras'}`;
+      ($('resign') as HTMLButtonElement).disabled = false; ($('newg') as HTMLButtonElement).textContent = 'Nueva partida';
+      say('Has recuperado tu partida en curso.'); render(); paintMoves(); paintTurn();
+      if (game.turn() !== myColor) botTurn();
+      return true;
+    } catch { try { localStorage.removeItem(SAVE); } catch {} return false; }
+  }
+
+  // ---------- Fin de partida ----------
+  function finish(result: 'w' | 'd' | 'l', msg: string) {
+    playing = false; thinking = false; selected = null; hintArrow = null; stopSearch();
+    resultTag = result === 'd' ? '1/2-1/2' : (result === 'w') === (myColor === 'w') ? '1-0' : '0-1';
+    const first = result === 'w' && !beaten(bot.id);
+    addStat(bot.id, result);
+    result === 'w' ? sfx.win() : result === 'd' ? sfx.done() : sfx.error();
+    say(first ? `${msg} 🏆 ¡${bot.name} superado para siempre!` : msg, result === 'w' ? 'ok' : result === 'l' ? 'bad' : '');
+    $('g-turn').textContent = 'Partida terminada.';
+    ($('hint') as HTMLButtonElement).disabled = true; ($('resign') as HTMLButtonElement).disabled = true;
+    ($('newg') as HTMLButtonElement).textContent = 'Jugar otra vez';
+    saveGame(); render(); paintMoves(); paintTurn();
+  }
+  function checkEnd(): boolean {
+    if (game.isCheckmate()) { const iWon = game.turn() !== myColor; finish(iWon ? 'w' : 'l', iWon ? `¡Jaque mate! Has ganado a ${bot.name}.` : `Jaque mate. Gana ${bot.name}.`); return true; }
+    if (game.isStalemate()) { finish('d', 'Tablas por rey ahogado.'); return true; }
+    if (game.isInsufficientMaterial()) { finish('d', 'Tablas por material insuficiente.'); return true; }
+    if (game.isThreefoldRepetition()) { finish('d', 'Tablas por repetición de posición.'); return true; }
+    if (game.isDrawByFiftyMoves()) { finish('d', 'Tablas por la regla de los 50 movimientos.'); return true; }
+    return false;
+  }
+
+  // ---------- Jugar ----------
+  const promoEl = $('promo');
+  function closePromo() { promoEl.hidden = true; promoEl.innerHTML = ''; }
+  function askPromotion(from: Square, to: Square) {
+    const names: Record<string, string> = { q: 'Dama', r: 'Torre', b: 'Alfil', n: 'Caballo' };
+    promoEl.innerHTML = '<div class="opts">' + (['q', 'r', 'b', 'n'] as const).map((t) => `<button type="button" data-p="${t}" aria-label="${names[t]}">${pieceSvg(myColor, t)}</button>`).join('') + '</div>';
+    promoEl.hidden = false; promoEl.querySelector<HTMLButtonElement>('button')!.focus();
+    promoEl.onclick = (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-p]');
+      if (btn) { closePromo(); attempt(from, to, btn.dataset.p as 'q' | 'r' | 'b' | 'n'); }
+      else if (e.target === promoEl) { closePromo(); selected = null; render(); }
+    };
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !promoEl.hidden) { closePromo(); selected = null; render(); } });
+
+  function applyMove(from: string, to: string, promo?: string) {
+    const mv = game.move({ from: from as Square, to: to as Square, promotion: promo });
+    last = { from: mv.from, to: mv.to }; selected = null; hintArrow = null;
+    mv.captured ? sfx.capture() : sfx.move(); if (game.inCheck()) later(sfx.check, 120);
+    render(mv.to); paintMoves(); saveGame();
+    return mv;
+  }
+  function attempt(from: Square, to: Square, promo?: 'q' | 'r' | 'b' | 'n') {
+    const opts = game.moves({ square: from, verbose: true }).filter((m) => m.to === to);
+    if (!opts.length) return false;
+    if (opts[0].promotion && !promo) { askPromotion(from, to); return true; }
+    try { applyMove(from, to, promo); } catch { return false; }
+    if (!checkEnd()) { say(''); botTurn(); }
+    return true;
+  }
+  async function botTurn() {
+    if (!playing || game.turn() === myColor) return;
+    const my = gid; thinking = true; paintTurn();
+    if (!ready) say('Cargando el motor (solo la primera vez)…');
+    const t0 = Date.now();
+    let u: string | null = null;
+    try { u = await botMove(bot, game.fen(), game.history().length, myColor === 'b'); }
+    catch { if (my === gid) { thinking = false; say('No se pudo cargar el motor. Comprueba tu conexión y pulsa «Nueva partida».', 'bad'); paintTurn(); } return; }
+    if (my === gid && $('feedback').textContent.startsWith('Cargando')) say('');
+    const wait = Math.max(0, 450 - (Date.now() - t0));
+    later(() => {
+      if (my !== gid || !playing) return;
+      thinking = false;
+      if (!u) { checkEnd(); return; }
+      try { applyMove(u.slice(0, 2), u.slice(2, 4), u[4]); } catch { /* jugada no válida: no debería ocurrir */ }
+      if (!checkEnd()) { paintTurn(); if (game.inCheck()) say('Jaque.', ''); }
+    }, wait);
+  }
+
+  boardEl.addEventListener('click', (e) => {
+    if (!playing || thinking || game.turn() !== myColor) return;
+    const t = (e.target as HTMLElement).closest<HTMLElement>('.sq'); if (!t) return;
+    const sq = t.dataset.sq as Square;
+    if (selected && selected !== sq && attempt(selected, sq)) return;
+    const p = game.get(sq);
+    selected = p && p.color === myColor && selected !== sq ? sq : null;
+    render();
+  });
+
+  function startGame() {
+    clearTimers(); stopSearch(); gid++; closePromo();
+    const b = $('setup-msg');
+    if (!picked) { b.textContent = 'Elige primero a tu rival.'; return; }
+    if (bot.premium && !isPremium()) { b.innerHTML = `${bot.name} es un rival del plan ilimitado. <a href="/precios">Ver el plan</a> o elige uno gratis.`; sfx.error(); return; }
+    b.textContent = '';
+    myColor = pickColor === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : pickColor;
+    game = new Chess(); flipped = myColor === 'b'; selected = null; last = null; hintArrow = null; hintsLeft = HINTS; undosLeft = UNDOS; resultTag = '*';
+    playing = true; thinking = false;
+    $('setup').hidden = true; $('game').hidden = false;
+    $('g-name').textContent = bot.name; $('g-elo').textContent = `Elo aprox. ${bot.elo} · ${beaten(bot.id) ? '✓ superado' : 'sin superar'} · juegas con ${myColor === 'w' ? 'blancas' : 'negras'}`;
+    ($('resign') as HTMLButtonElement).disabled = false; ($('newg') as HTMLButtonElement).textContent = 'Nueva partida';
+    say(''); $('moves').textContent = ''; render(); paintTurn(); saveGame();
+    $('game').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (game.turn() !== myColor) botTurn();
+  }
+  function backToSetup() {
+    clearTimers(); stopSearch(); gid++; playing = false; thinking = false; closePromo();
+    game = new Chess(); flipped = false; selected = null; last = null; hintArrow = null;
+    try { localStorage.removeItem(SAVE); } catch {}
+    $('game').hidden = true; $('setup').hidden = false; render(); paintStats();
+  }
+
+  // ---------- Controles ----------
+  document.querySelectorAll<HTMLButtonElement>('.bot').forEach((el) => el.addEventListener('click', () => {
+    document.querySelectorAll('.bot').forEach((x) => x.setAttribute('aria-checked', 'false'));
+    el.setAttribute('aria-checked', 'true'); bot = botById(el.dataset.bot!)!; picked = true;
+    const m = $('setup-msg');
+    if (bot.premium && !isPremium()) m.innerHTML = `${bot.name} es un rival del plan ilimitado. <a href="/precios">Ver el plan</a>.`; else m.textContent = '';
+  }));
+  document.querySelectorAll<HTMLButtonElement>('[data-color]').forEach((el) => el.addEventListener('click', () => {
+    document.querySelectorAll('[data-color]').forEach((x) => x.setAttribute('aria-checked', 'false'));
+    el.setAttribute('aria-checked', 'true'); pickColor = el.dataset.color as 'w' | 'b' | 'r';
+  }));
+  $('start').addEventListener('click', startGame);
+  $('newg').addEventListener('click', backToSetup);
+  $('resign').addEventListener('click', () => { if (playing && confirm('¿Seguro que quieres rendirte?')) finish('l', `Te has rendido. Gana ${bot.name}.`); });
+  $('flip').addEventListener('click', () => { flipped = !flipped; render(); });
+  $('hint').addEventListener('click', async () => {
+    if (!playing || thinking || game.turn() !== myColor || hintsLeft <= 0) return;
+    const my = gid; const fen = game.fen(); hintsLeft--; thinking = true; paintTurn(); say('Calculando la pista…');
+    let u: string | null = null;
+    try { u = await hintMove(fen); } catch { u = null; }
+    if (my !== gid || !playing) return;
+    thinking = false;
+    if (!u) { hintsLeft++; say('No se pudo calcular la pista. No se ha gastado.', 'bad'); paintTurn(); return; }
+    hintArrow = { from: u.slice(0, 2), to: u.slice(2, 4) }; render();
+    const left = hintsLeft; say(`Pista: la flecha marca la mejor jugada. Te ${left === 1 ? 'queda 1 pista' : 'quedan ' + left + ' pistas'}.`);
+    paintTurn(); saveGame();
+  });
+  $('undo').addEventListener('click', () => {
+    if (($('undo') as HTMLButtonElement).disabled) return;
+    clearTimers(); game.undo(); game.undo(); undosLeft--; hintArrow = null; selected = null;
+    const h = game.history({ verbose: true }); const l = h[h.length - 1]; last = l ? { from: l.from, to: l.to } : null;
+    sfx.move(); say('Jugada deshecha. Te quedan ' + undosLeft + (undosLeft === 1 ? ' retroceso.' : ' retrocesos.')); render(); paintMoves(); paintTurn(); saveGame();
+  });
+  $('pgn-dl').addEventListener('click', () => {
+    const url = URL.createObjectURL(new Blob([buildPgn()], { type: 'application/x-chess-pgn' }));
+    const a = document.createElement('a'); a.href = url; a.download = `partida-vs-${bot.id}.pgn`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+  $('to-az').addEventListener('click', () => {
+    try { sessionStorage.setItem('ngm-handoff', buildPgn()); } catch {}
+    location.href = '/analizador';
+  });
+  function syncSound() { const b = $('sound'); b.textContent = sound.on ? '🔊 Sonido' : '🔇 Sin sonido'; b.setAttribute('aria-pressed', String(sound.on)); }
+  $('sound').addEventListener('click', () => { sound.set(!sound.on); syncSound(); sfx.move(); });
+
+  syncSound(); paintStats(); render();
+  restoreGame();
+  syncNow().then((c) => { if (c) paintStats(); });
+  refreshPremium().then(() => { if (!playing) { const m = $('setup-msg'); if (bot.premium && picked && isPremium()) m.textContent = ''; } });
+</script>

@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import { LEGAL, ANALYTICS_TOKEN } from '../config';
+---
+<Base title="Política de privacidad" description="Cómo trata NextGranMaestro tus datos: el análisis se realiza en tu dispositivo y no recopilamos las posiciones que analizas." crumbs={[{ name: 'Política de privacidad', href: '/privacidad' }]}>
+  <div class="page-head narrow"><h1>Política de privacidad</h1></div>
+  <div class="narrow prose" style="padding-bottom:3rem">
+    <p class="notice">Última actualización: {LEGAL.updated}.</p>
+    <h2>Responsable</h2>
+    <p><span class={LEGAL.owner.startsWith('[')?'placeholder':''}>{LEGAL.owner}</span> · NIF/CIF <span class={LEGAL.taxId.startsWith('[')?'placeholder':''}>{LEGAL.taxId}</span> · <span class={LEGAL.address.startsWith('[')?'placeholder':''}>{LEGAL.address}</span> · {LEGAL.email}</p>
+    <h2>Qué datos tratamos</h2>
+    <ul>
+      <li><strong>Posiciones de ajedrez:</strong> el análisis se ejecuta en tu navegador. No las enviamos a nuestros servidores.</li>
+      <li><strong>Almacenamiento local:</strong> guardamos en tu dispositivo el contador diario de análisis gratuitos, tu preferencia de sonido, tu progreso en el entrenamiento y, si eres suscriptor, tu código de activación y un identificador aleatorio de tu navegador. Salvo lo indicado en el punto de pagos, no se envían a ningún servidor.</li>
+      <li><strong>Pagos:</strong> si compras un plan, el pago lo gestiona Stripe Payments Europe, Ltd. (proveedor externo, con su propia política de privacidad). Nosotros no almacenamos datos de tarjeta; solo comprobamos con Stripe que tu suscripción está activa y guardamos en tu navegador un código de activación. Para que cada plan funcione en un solo dispositivo a la vez, nuestro servidor recuerda el identificador aleatorio (sin datos personales) del navegador donde está activo cada suscripción y la fecha del último traspaso.</li>
+      <li><strong>Cuenta (opcional):</strong> si creas una cuenta guardamos tu email, tu contraseña (solo en forma cifrada e irreversible, nunca en claro), la fecha de alta, tu progreso en el entrenamiento y tus marcas contra los bots, y el identificador de tu suscripción de Stripe si has comprado un plan. Es necesaria para comprar. Usamos una cookie de sesión estrictamente necesaria para mantenerte conectado. Base legal: ejecución del servicio que solicitas. Conservamos los datos hasta que elimines tu cuenta, que puedes hacer tú mismo en «Mi plan», donde también puedes descargarlos.</li>
+      <li><strong>Recuperar el plan por email:</strong> si lo usas, enviamos tu email a nuestro servidor, que consulta a Stripe si hay un plan activo con él y, solo en ese caso, te manda el código a través del proveedor de correo Resend. No guardamos tu email en claro: solo conservamos un resumen irreversible (hash) del mismo, junto con la hora del último envío, para limitar los envíos repetidos.</li>
+      <li><strong>Atención al cliente:</strong> si nos escribes por Discord, tus mensajes y tu cuenta de Discord se rigen también por las políticas de Discord. No nos envíes datos de tarjeta ni contraseñas.</li>
+      <li><strong>Duelos en línea:</strong> si juegas en línea, tu apodo, tu Elo, tus resultados y tu posición en el ranking son visibles para los demás jugadores conectados y en el ranking público; tu email nunca se muestra. Guardamos tus últimas 15 partidas (jugadas y resultado) en tu cuenta para que puedas revisarlas, y las denuncias que envíes u otros envíen sobre una partida (partida, motivo y cuenta que denuncia) para moderar el servicio. Al borrar tu cuenta desapareces del ranking y se elimina tu historial. No hay chat libre: solo mensajes rápidos predefinidos.</li>
+      {ANALYTICS_TOKEN && <li><strong>Estadísticas:</strong> usamos Cloudflare Web Analytics, sin cookies y sin seguimiento entre sitios, para conocer cifras agregadas de visitas.</li>}
+      <li><strong>Alojamiento:</strong> la web se sirve a través de Cloudflare, que puede tratar datos técnicos (como la dirección IP) para entregar y proteger el sitio.</li>
+    </ul>
+    <h2>Tus derechos</h2>
+    <p>Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a {LEGAL.email}. Si consideras que no hemos atendido tus derechos, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>
+  </div>
+</Base>

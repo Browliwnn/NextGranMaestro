@@ -1,0 +1,121 @@
+---
+import Base from '../layouts/Base.astro';
+import { PLANS, SERVER_CHECKOUT, FREE_ANALYSES_PER_DAY, PORTAL_URL, TRAINING, BOT_HINTS } from '../config';
+import { BOTS } from '../data/bots';
+const nFree = BOTS.filter((b) => !b.premium).length; const nPrem = BOTS.length - nFree;
+const rows = [
+  ['Análisis al día', `${FREE_ANALYSES_PER_DAY}`, 'Ilimitados'],
+  ['Mejor jugada con flecha en el tablero', '✓', '✓'],
+  ['Evaluación y línea principal', '✓', '✓'],
+  ['Profundidad Rápido, Normal y Profundo', '✓', '✓'],
+  ['Profundidad Máxima (la más precisa)', '—', '✓'],
+  ['Sin límite diario', '—', '✓'],
+  ['Entrenamiento: niveles nuevos al día', `${TRAINING.freePerDay}`, `${TRAINING.premiumPerDay}`],
+  ['Jugar contra bots (hasta 1700 de Elo aprox.)', `${nFree} bots`, `${nFree} bots`],
+  ['Bots fuertes (de 1900 a 3190 de Elo aprox.)', '—', `${nPrem} bots`],
+  ['Pistas por partida contra bots', `${BOT_HINTS}`, `${BOT_HINTS}`],
+];
+const offers = [PLANS.monthly, PLANS.yearly].filter((p) => p.checkout).map((p) => ({ '@type': 'Offer', price: p.priceNumber, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', url: p.checkout }));
+const jsonLd = [{ '@context': 'https://schema.org', '@type': 'Product', name: 'NextGranMaestro — Plan ilimitado', description: 'Análisis de ajedrez ilimitados con Stockfish en el navegador.', brand: { '@type': 'Brand', name: 'NextGranMaestro' }, ...(offers.length ? { offers } : {}) }];
+---
+<Base title="Precios — Plan gratis y plan ilimitado" description={`Empieza gratis o elige el plan ilimitado de NextGranMaestro desde ${PLANS.yearly.price}${PLANS.yearly.period}. Analiza todas las posiciones que quieras.`} crumbs={[{ name: 'Precios', href: '/precios' }]} jsonLd={jsonLd}>
+  <div class="page-head wrap" style="text-align:center"><span class="eyebrow">Precios</span><h1>Elige tu plan</h1><p class="muted" style="max-width:56ch;margin-inline:auto">Empieza gratis. Pasa al plan ilimitado cuando quieras analizar sin límites. Sin permanencia.</p></div>
+  <div class="narrow card" data-prem-only style="text-align:center;margin-bottom:2rem">
+    <p class="badge-gold">♛ Ya tienes un plan activo</p>
+    <h2 style="font-size:1.4rem">Gracias por apoyar NextGranMaestro</h2>
+    <p class="muted">Consulta o gestiona tu plan, o pásalo a otro dispositivo.</p>
+    <p><a class="btn btn-primary btn-sm" href="/cuenta">Mi plan</a> <a class="btn btn-sm" href="/traspasar">Traspasar plan</a></p>
+  </div>
+  <div class="wrap grid grid-3 plans" data-free-only>
+    <article class="card reveal">
+      <h2 class="ph">Gratis</h2>
+      <p class="price">0 €</p>
+      <p class="muted small-p">Para probar y analizar de vez en cuando.</p>
+      <ul class="ticks"><li>{FREE_ANALYSES_PER_DAY} análisis al día</li><li>Flecha con la mejor jugada en el tablero</li><li>Entrenamiento: {TRAINING.freePerDay} niveles nuevos al día</li><li>{nFree} bots para jugar, {BOT_HINTS} pistas por partida</li><li>Tablero, FEN y sonidos</li></ul>
+      <a class="btn" href="/analizador" style="width:100%">Probar gratis</a>
+    </article>
+    <article class="card reveal">
+      <h2 class="ph">Ilimitado mensual</h2>
+      <p class="price">{PLANS.monthly.price}<small>{PLANS.monthly.period}</small></p>
+      <p class="muted small-p">Flexible: cancela cuando quieras.</p>
+      <ul class="ticks"><li>Análisis ilimitados</li><li>Profundidad Máxima desbloqueada</li><li>Entrenamiento: {TRAINING.premiumPerDay} niveles nuevos al día</li><li>{nPrem} bots más fuertes, hasta el motor a plena potencia</li><li>Todo lo del plan gratis</li></ul>
+      {PLANS.monthly.checkout
+        ? <a class="btn btn-primary" href={PLANS.monthly.checkout} data-checkout data-plan="monthly" data-server={SERVER_CHECKOUT ? "1" : undefined} rel="noopener" style="width:100%">Elegir mensual</a>
+        : <button class="btn btn-primary" type="button" disabled aria-disabled="true" style="width:100%">Próximamente</button>}
+    </article>
+    <article class="card featured reveal">
+      <span class="ribbon">Mejor precio</span>
+      <h2 class="ph">Ilimitado anual</h2>
+      <p class="price">{PLANS.yearly.price}<small>{PLANS.yearly.period}</small></p>
+      <p class="muted small-p">{PLANS.yearly.note}</p>
+      <ul class="ticks"><li>Análisis ilimitados todo el año</li><li>Profundidad Máxima desbloqueada</li><li>Entrenamiento: {TRAINING.premiumPerDay} niveles nuevos al día</li><li>{nPrem} bots más fuertes</li><li>El mejor precio por mes</li></ul>
+      {PLANS.yearly.checkout
+        ? <a class="btn btn-primary" href={PLANS.yearly.checkout} data-checkout data-plan="yearly" data-server={SERVER_CHECKOUT ? "1" : undefined} rel="noopener" style="width:100%">Elegir anual</a>
+        : <button class="btn btn-primary" type="button" disabled aria-disabled="true" style="width:100%">Próximamente</button>}
+    </article>
+  </div>
+
+  <p class="muted" data-free-only style="text-align:center;max-width:62ch;margin:1.2rem auto 0" id="buy-note">Para comprar necesitas una <a href="/entrar?crear=1&next=/precios">cuenta gratuita</a>: así tu plan queda guardado y puedes recuperarlo si cambias de móvil o de ordenador.</p>
+
+  <section data-free-only>
+    <div class="narrow">
+      <h2 class="reveal">Comparativa</h2>
+      <div class="tbl-wrap reveal">
+        <table>
+          <thead><tr><th scope="col">Qué incluye</th><th scope="col">Gratis</th><th scope="col">Ilimitado</th></tr></thead>
+          <tbody>{rows.map((r) => <tr><th scope="row">{r[0]}</th><td>{r[1]}</td><td>{r[2]}</td></tr>)}</tbody>
+        </table>
+      </div>
+      <ul class="ticks trust">
+        <li>Pago seguro procesado por Stripe: nosotros nunca vemos ni guardamos los datos de tu tarjeta.</li>
+        <li>Cancela cuando quieras desde el portal de cliente{PORTAL_URL ? <span> · <a href={PORTAL_URL} rel="noopener">gestionar mi suscripción</a></span> : null}.</li>
+        <li>Tu plan se activa en el momento del pago, en el dispositivo donde pagas. Funciona en un dispositivo a la vez y puedes <a href="/traspasar">traspasarlo</a> a otro cuando quieras.</li>
+      </ul>
+      <p class="notice">Los precios incluyen impuestos según la normativa aplicable en el momento de la compra. Consulta las <a href="/condiciones">condiciones de contratación</a> antes de pagar. NextGranMaestro es una herramienta de estudio: no debe utilizarse durante partidas contra otras personas.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .plans{max-width:1000px;align-items:stretch}
+  .plans .card{display:flex;flex-direction:column;position:relative}
+  .plans .ticks{flex:1}
+  .ph{font-size:1.35rem}
+  .badge-gold{display:inline-block;margin:0 0 .5rem;padding:.25rem .7rem;border-radius:999px;background:rgba(214,176,92,.14);color:#e9cd8a;font-weight:700;font-size:.85rem}
+  .price small{font:500 1rem var(--font);color:var(--muted);margin-left:.2rem}
+  .small-p{font-size:.92rem;margin:0}
+  .ribbon{position:absolute;top:-12px;right:18px;background:var(--gold);color:#1a1305;font:800 .72rem var(--font);letter-spacing:.08em;text-transform:uppercase;padding:.3rem .7rem;border-radius:99px}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;min-width:420px}
+  th,td{padding:.85rem 1rem;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{background:var(--surface);font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody th{font-weight:500}
+  td{color:var(--text)}td:last-child{color:var(--gold);font-weight:700}
+  tr:last-child th,tr:last-child td{border-bottom:0}
+</style>
+<script>
+  import { cachedUser, me, startCheckout, needsVerify } from '../utils/account';
+  // Comprar exige tener cuenta. Si ya has entrado, el pago se abre con tu email y tu identificador para vincular el plan.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('a[data-checkout]')];
+  const base = new Map(links.map((a) => [a, a.href]));
+  const prepare = (u: { id: string; email: string } | null) => links.forEach((a) => {
+    if (!u) { a.href = base.get(a)!; return; }
+    const url = new URL(base.get(a)!); url.searchParams.set('prefilled_email', u.email); url.searchParams.set('client_reference_id', u.id); a.href = url.toString();
+  });
+  prepare(cachedUser());
+  if (cachedUser()) me().then((u) => { prepare(u); note(u); });
+  function note(u: unknown) { const n = document.getElementById('buy-note'); if (n && u) n.innerHTML = 'Has iniciado sesión: tu plan se guardará en tu cuenta.'; }
+  note(cachedUser());
+  links.forEach((a) => a.addEventListener('click', async (e) => {
+    const u = cachedUser();
+    if (!u) { e.preventDefault(); location.href = '/entrar?aviso=pago&next=/precios'; return; }
+    if (needsVerify(u)) { e.preventDefault(); alert('Confirma primero tu email (te lo hemos enviado). Puedes reenviarlo desde Mi cuenta.'); return; }
+    if (a.dataset.server) {
+      e.preventDefault(); const r = await startCheckout((a.dataset.plan as 'monthly' | 'yearly') || 'monthly');
+      if (r.ok && r.url) location.href = r.url;
+      else if (r.error === 'no_session') location.href = '/entrar?aviso=pago&next=/precios';
+      else if (r.error === 'email_not_verified') alert('Confirma primero tu email desde Mi cuenta.');
+      else alert('No se pudo abrir el pago ahora mismo. Inténtalo de nuevo en unos minutos.');
+    }
+  }));
+</script>
