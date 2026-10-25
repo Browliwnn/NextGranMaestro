@@ -76,3 +76,4 @@ Sigue **`PAGOS.md`**. En resumen: `node scripts/setup-stripe.mjs` crea los dos p
 
 ## Licencias
 Stockfish es GPLv3 (ver `/engine/LICENSE-stockfish-GPLv3.txt`, enlazado en el Aviso legal).
+.
