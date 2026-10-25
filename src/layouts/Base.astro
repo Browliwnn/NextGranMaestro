@@ -62,22 +62,12 @@ const ld = [...base, ...jsonLd];
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={og} />
   {ld.map((o) => <script type="application/ld+json" set:html={JSON.stringify(o)} />)}
-  <script is:inline>document.documentElement.classList.add('js');try{var t=localStorage.getItem('ngm-token'),o=+localStorage.getItem('ngm-prem-ok')||0;if(t&&Date.now()-o<2592e5)document.documentElement.setAttribute('data-prem',localStorage.getItem('ngm-plan')||'1')}catch(e){}</script>
+  <script is:inline>document.documentElement.classList.add('js');try{var t=localStorage.getItem('ngm-token'),o=+localStorage.getItem('ngm-prem-ok')||0;if(t&&Date.now()-o<2592e5)document.documentEl[...]
 </head>
 <body>
   <a class="skip" href="#main">Saltar al contenido</a>
   <Header />
-  <main id="main">
-    {crumbs.length > 0 && (
-      <nav class="crumbs wrap" aria-label="Migas de pan">
-        <ol>
-          <li><a href="/">Inicio</a></li>
-          {crumbs.map((c, i) => <li>{i === crumbs.length - 1 ? <span aria-current="page">{c.name}</span> : <a href={c.href}>{c.name}</a>}</li>)}
-        </ol>
-      </nav>
-    )}
-    <slot />
-  </main>
+  <main id="main"></main>
   <Footer />
   <script>
     const els = document.querySelectorAll('.reveal');
